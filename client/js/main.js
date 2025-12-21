@@ -1,7 +1,7 @@
 // main.js - Main application controller
 
-import { state } from './state.js';
-import { buildChartsPngFileName } from './utils.js';
+import { state } from './modules/state.js';
+import { buildChartsPngFileName } from './modules/utils.js';
 import {
   regenerateHeadliners,
   regenerateLocalDJs,
@@ -10,11 +10,11 @@ import {
   regenerateVendors,
   regenerateOtherCategories,
   regenerateOtherItems
-} from './repeaters.js';
-import { calculateBudget, updateSummaryDisplay } from './budgetCalculator.js';
-import { updateCharts, downloadChartsPNG } from './charts.js';
-import { updateTextPreview, copyTextPreview, exportTextPreviewTxt } from './textPreview.js';
-import { downloadCSV, setupCSVImport, triggerImport } from './csv.js';
+} from './modules/repeaters.js';
+import { calculateBudget, updateSummaryDisplay } from './modules/budgetCalculator.js';
+import { updateCharts, downloadChartsPNG } from './modules/charts.js';
+import { updateTextPreview, copyTextPreview, exportTextPreviewTxt } from './modules/textPreview.js';
+import { downloadCSV, setupCSVImport, triggerImport } from './modules/csv.js';
 
 // Main budget update function
 export function updateBudget() {
@@ -143,4 +143,5 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize with one headliner
   regenerateHeadliners(updateBudget);
   updateBudget();
+
 });
