@@ -271,4 +271,5 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('budgetSelector')) {
     initBudgetSelector();
   }
+
 });
