@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const path = require('path');
 
 const app = express();
@@ -45,8 +45,8 @@ async function connectDB() {
 
 // Health check
 app.get('/api', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Budget App Server is running',
     storage: db ? 'MongoDB (Connected)' : 'MongoDB (Not Connected)',
     mongoConfigured: !!process.env.MONGODB_URI
@@ -69,20 +69,31 @@ app.get('/api/budgets', async (req, res) => {
   }
 });
 
-// GET specific budget
+// GET specific budget (accept custom id OR Mongo _id)
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     if (!db) {
       return res.status(503).json({ error: 'Database not connected' });
     }
-    const budget = await db.collection('budgets').findOne({ id: req.params.id });
+
+    const param = req.params.id;
+
+    // 1) Try your custom "id" field first
+    let budget = await db.collection('budgets').findOne({ id: param });
+
+    // 2) If not found and it looks like an ObjectId, try Mongo _id
+    if (!budget && ObjectId.isValid(param)) {
+      budget = await db.collection('budgets').findOne({ _id: new ObjectId(param) });
+    }
+
     if (!budget) {
       return res.status(404).json({ error: 'Budget not found' });
     }
+
     res.type('text/csv').send(budget.csv);
   } catch (error) {
     console.error('Error fetching budget:', error);
-    res.status(404).json({ error: 'Budget not found' });
+    res.status(500).json({ error: 'Failed to fetch budget' });
   }
 });
 
@@ -93,11 +104,11 @@ app.post('/api/budgets', async (req, res) => {
       return res.status(503).json({ error: 'Database not connected' });
     }
     const { csv, name, date } = req.body;
-    
+
     if (!csv || !name || !date) {
       return res.status(400).json({ error: 'Missing required fields: csv, name, date' });
     }
-    
+
     const id = Date.now().toString();
     const budget = {
       id,
@@ -106,9 +117,9 @@ app.post('/api/budgets', async (req, res) => {
       csv,
       createdAt: new Date().toISOString()
     };
-    
+
     await db.collection('budgets').insertOne(budget);
-    
+
     console.log(`✅ Budget saved: ${name} (${id})`);
     res.json({ id, message: 'Budget saved successfully' });
   } catch (error) {
@@ -117,17 +128,27 @@ app.post('/api/budgets', async (req, res) => {
   }
 });
 
-// DELETE budget
+// DELETE budget (accept custom id OR Mongo _id)
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
     if (!db) {
       return res.status(503).json({ error: 'Database not connected' });
     }
-    const result = await db.collection('budgets').deleteOne({ id: req.params.id });
+
+    const param = req.params.id;
+
+    // Prefer deleting by custom id; fallback to _id if needed
+    let result = await db.collection('budgets').deleteOne({ id: param });
+
+    if (result.deletedCount === 0 && ObjectId.isValid(param)) {
+      result = await db.collection('budgets').deleteOne({ _id: new ObjectId(param) });
+    }
+
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Budget not found' });
     }
-    console.log(`🗑️  Budget deleted: ${req.params.id}`);
+
+    console.log(`🗑️  Budget deleted: ${param}`);
     res.json({ message: 'Budget deleted successfully' });
   } catch (error) {
     console.error('❌ Delete error:', error);
@@ -140,15 +161,15 @@ const PORT = process.env.PORT || 3000;
 // Start server
 async function startServer() {
   console.log('🚀 Starting Budget App Server...');
-  
+
   // Try to connect to MongoDB
   const dbConnected = await connectDB();
-  
+
   if (!dbConnected) {
     console.warn('⚠️  Server starting WITHOUT database connection');
     console.warn('⚠️  API endpoints will return 503 errors until DB is connected');
   }
-  
+
   // Start server regardless of DB connection
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server running on port ${PORT}`);
