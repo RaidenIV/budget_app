@@ -1,0 +1,446 @@
+/* ----------------------------------------------------------
+   GLOBAL PAGE STYLE
+---------------------------------------------------------- */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    font-family: 'Rajdhani', sans-serif;
+    color: #000000;
+}
+
+.page-wrapper {
+    width: 100%;
+    max-width: 1700px;
+    margin: 0 auto;
+    padding: 25px 30px;
+}
+
+/* ----------------------------------------------------------
+   HEADINGS
+---------------------------------------------------------- */
+h1 {
+    text-align: center;
+    font-size: 32px;
+    margin: 0 0 20px 0;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* ----------------------------------------------------------
+   LAYOUT STRUCTURE (3 equal columns)
+---------------------------------------------------------- */
+.main-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 30px;
+    align-items: start;
+}
+
+.preview-panel,
+.form-panel,
+.chart-panel {
+    min-width: 0;
+}
+
+.chart-panel {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+}
+
+/* ----------------------------------------------------------
+   MOBILE RESPONSIVE
+---------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-panel {
+        position: static;
+        top: auto;
+    }
+}
+
+.ads-split-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 6px 0 14px;
+}
+
+.ads-split-label {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+@media (max-width: 900px) {
+    .ads-split-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ----------------------------------------------------------
+   FORM CONTAINER
+---------------------------------------------------------- */
+form {
+    background: #ffffff;
+    padding: 22px;
+    border-radius: 10px;
+    border: 1px solid #e6e6e6;
+    box-shadow: 0 6px 18px rgba(10, 20, 30, 0.06);
+}
+
+label {
+    display: block;
+    margin: 10px 0 6px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e3e6ea;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111;
+    box-sizing: border-box;
+}
+
+/* ----------------------------------------------------------
+   QUANTITY ROWS
+---------------------------------------------------------- */
+.quantity-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+    margin-bottom: 14px;
+}
+
+.quantity-row label {
+    flex: 1;
+}
+
+.quantity-row input[type=number] {
+    width: 100px;
+    flex: 0 0 100px;
+}
+
+/* ----------------------------------------------------------
+   COLLAPSIBLES
+---------------------------------------------------------- */
+.collapsible {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 14px;
+    background: #ffffff;
+}
+
+.collapsible-header {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    background: #f3f3f3;
+}
+
+.collapsible .arrow {
+    transition: transform 0.25s ease;
+}
+
+.collapsible.open .arrow {
+    transform: rotate(90deg);
+}
+
+.collapsible-content {
+    padding: 12px 16px;
+    display: none;
+}
+
+.collapsible.open .collapsible-content {
+    display: block;
+}
+
+/* ----------------------------------------------------------
+   HEADLINER CARDS
+---------------------------------------------------------- */
+.headliner-card {
+    background: #ffffff;
+    padding: 12px;
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(10, 20, 30, 0.04);
+    margin-bottom: 12px;
+}
+
+.headliner-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* ----------------------------------------------------------
+   CHARTS STYLING
+---------------------------------------------------------- */
+.charts-section {
+    width: 100%;
+}
+
+.charts-title {
+    width: 100%;
+    text-align: center;
+    font-weight: 800;
+    font-size: 20px;
+    margin: 0 0 10px 0;
+}
+
+.charts-grid {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.chart-card {
+    width: 100%;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.chart-subtitle {
+    width: 100%;
+    text-align: center;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.chart-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 240px;
+}
+
+.chart-canvas-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.chart-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+/* ----------------------------------------------------------
+   SUMMARY BOX
+---------------------------------------------------------- */
+#summary {
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    box-shadow: 0 6px 18px rgba(10,20,30,0.04);
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.summary-title {
+    font-weight: 800;
+    font-size: 24px;
+    margin: 0 0 10px 0;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* ----------------------------------------------------------
+   SERVER LOAD SECTION
+---------------------------------------------------------- */
+.server-load-section {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid #ddd;
+}
+
+.server-load-section h3 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.server-load-section select {
+    width: 100%;
+    max-width: 400px;
+    margin: 10px 0;
+}
+
+.load-status {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+.load-status.success {
+    color: #4CAF50;
+}
+
+.load-status.error {
+    color: #f44336;
+}
+
+/* ----------------------------------------------------------
+   TEXT PREVIEW
+---------------------------------------------------------- */
+#textPreview {
+    margin: 0;
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    white-space: pre-wrap;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.35;
+    overflow: visible;
+}
+
+.text-preview-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.copy-status {
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+/* ----------------------------------------------------------
+   BUTTONS
+---------------------------------------------------------- */
+.controls {
+    text-align: center;
+    margin-top: 16px;
+}
+
+button {
+    background: #007BFF;
+    color: #ffffff;
+    padding: 10px 18px;
+    margin: 6px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* ----------------------------------------------------------
+   MARKETING: "Which account?" checkbox rows
+---------------------------------------------------------- */
+.account-label {
+    font-weight: 700;
+    font-size: 14px;
+    margin: 6px 0 6px;
+}
+
+.account-options {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 0 0 10px;
+}
+
+.account-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.account-options input[type="checkbox"] {
+    width: auto;
+}
+
+.account-picker {
+    margin: 6px 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #e3e6ea;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.account-picker-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin: 0 0 8px;
+}
+
+.account-picker-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.account-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Marketing: split ad inputs */
+.ads-split-col {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ----------------------------------------------------------
+   OTHER CATEGORY WRAPPER
+---------------------------------------------------------- */
+.other-category-wrapper {
+    margin-bottom: 20px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.dynamic-input-group {
+    margin-bottom: 12px;
+}

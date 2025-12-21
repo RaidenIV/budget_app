@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Event Budget Tracker</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+<div class="page-wrapper">
+    <h1>Event Budget Tracker</h1>
+
+    <div class="main-container">
+
+    <!-- =========================
+        LEFT COLUMN: SUMMARY + TEXT PREVIEW
+    ========================== -->
+    <aside class="preview-panel">
+
+        <!-- SUMMARY -->
+        <div id="summary">
+            <div class="summary-title">SUMMARY</div>
+            <p>Total Expenses: $<span id="totalExpenses">0</span></p>
+            <p>Total Incoming Sales: $<span id="totalRevenue">0</span></p>
+            <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
+        </div>
+
+        <!-- SERVER LOAD SECTION -->
+        <div class="server-load-section">
+            <h3>Load Previous Budget</h3>
+            
+            <label for="budgetSelector">Select Budget:</label>
+            <select id="budgetSelector" onchange="handleBudgetSelection(this.value)">
+                <option value="">-- Choose a budget --</option>
+            </select>
+            
+            <button type="button" onclick="handleLoadSelectedBudget()">Load Budget</button>
+            
+            <span id="loadStatus" class="load-status"></span>
+        </div>
+
+        <!-- TEXT BUDGET PREVIEW -->
+        <div id="textPreview"></div>
+        <div class="text-preview-actions">
+            <button type="button" onclick="copyTextPreview()">Copy</button>
+            <button type="button" onclick="exportTextPreviewTxt()">Export .txt</button>
+            <span id="copyStatus" class="copy-status"></span>
+        </div>
+    </aside>
+
+
+    <!-- =========================
+        MIDDLE COLUMN: FORM
+    ========================== -->
+    <div class="form-panel">
+        <form id="budgetForm" onsubmit="return false">
+        <!-- TITLE & DATE -->
+        <label>Show Title:</label>
+        <input id="showTitle" type="text" oninput="updateBudget()">
+        <label>Show Date:</label>
+        <input id="showDate" type="date" oninput="updateBudget()">
+
+        <!-- -------------------------
+            COLLAPSIBLE: HEADLINERS
+        -------------------------- -->
+        <div class="collapsible" id="col_headliners">
+            <div class="collapsible-header" onclick="toggleCollapse('col_headliners')">
+            <span class="arrow">▸</span> Headliners
+            </div>
+            <div class="collapsible-content">
+            <div class="quantity-row">
+                <label>Number of Headliners:</label>
+                <input id="numHeadliners" type="number" min="0" max="10" value="0"
+                    onchange="regenerateHeadliners()">
+            </div>
+            <div id="headlinerInputs"></div>
+            </div>
+        </div>
+
+        <!-- -------------------------
+            COLLAPSIBLE: SUPPORT
+        -------------------------- -->
+        <div class="collapsible" id="col_support">
+            <div class="collapsible-header" onclick="toggleCollapse('col_support')">
+            <span class="arrow">▸</span> Support
+            </div>
+            <div class="collapsible-content">
+            <label>Direct Support Fee:</label>
+            <input id="directSupport" type="number" step="0.01" oninput="updateBudget()">
+            <div class="quantity-row">
+                <label>Number of Local DJs:</label>
+                <input id="numLocalDJs" type="number" min="0" max="20" value="0"
+                    onchange="regenerateLocalDJs()">
+            </div>
+            <div id="localDJInputs"></div>
+            </div>
+        </div>
+
+
+        <!-- -------------------------
+            COLLAPSIBLE: PRODUCTION
+        -------------------------- -->
+        <div class="collapsible" id="col_production">
+            <div class="collapsible-header" onclick="toggleCollapse('col_production')">
+            <span class="arrow">▸</span> Production
+            </div>
+            <div class="collapsible-content">
+            <label>Venue:</label>
+            <input id="venue" type="number" step="0.01" oninput="updateBudget()">
+            <label for="vjFee">VJ Fee</label>
+            <input id="vjFee" type="number" step="0.01" value="0" oninput="updateBudget()">
+            <label>LED Wall:</label>
+            <input id="ledWall" type="number" step="0.01" oninput="updateBudget()">
+            <label>Lights:</label>
+            <input id="lights" type="number" step="0.01" oninput="updateBudget()">
+            <label>Lasers:</label>
+            <input id="lasers" type="number" step="0.01" oninput="updateBudget()">
+            </div>
+        </div>
+
+
+        <!-- -------------------------
+            COLLAPSIBLE: GEAR
+        -------------------------- -->
+        <div class="collapsible" id="col_gear">
+            <div class="collapsible-header" onclick="toggleCollapse('col_gear')">
+            <span class="arrow">▸</span> Gear Rentals
+            </div>
+            <div class="collapsible-content">
+            <div class="quantity-row">
+                <label>Number of CDJs:</label>
+                <input id="numCDJs" type="number" min="0" max="10" value="0"
+                    onchange="regenerateCDJs()">
+            </div>
+            <div id="cdjInputs"></div>
+            <label>Mixer:</label>
+            <input id="mixer" type="number" step="0.01" oninput="updateBudget()">
+            <label>Sound:</label>
+            <input id="sound" type="number" step="0.01" oninput="updateBudget()">
+            <label>Table:</label>
+            <input id="table" type="number" step="0.01" oninput="updateBudget()">
+            </div>
+        </div>
+
+        <!-- -------------------------
+            COLLAPSIBLE: MARKETING
+        -------------------------- -->
+        <div class="collapsible" id="col_marketing">
+          <div class="collapsible-header" onclick="toggleCollapse('col_marketing')">
+            <span class="arrow">▸</span> Marketing
+          </div>
+          <div class="collapsible-content">
+            <label>Facebook Ads</label>
+            <div class="ads-split-row">
+              <div class="ads-split-col">
+                <div class="ads-split-label">XODIA</div>
+                <input id="facebookAdsXodia" type="number" step="0.01" oninput="updateBudget()">
+              </div>
+              <div class="ads-split-col">
+                <div class="ads-split-label">SPACE CAMP HQ</div>
+                <input id="facebookAdsSpaceCampHQ" type="number" step="0.01" oninput="updateBudget()">
+              </div>
+            </div>
+            <label>Instagram Ads</label>
+            <div class="ads-split-row">
+              <div class="ads-split-col">
+                <div class="ads-split-label">XODIA</div>
+                <input id="instagramAdsXodia" type="number" step="0.01" oninput="updateBudget()">
+              </div>
+              <div class="ads-split-col">
+                <div class="ads-split-label">SPACE CAMP HQ</div>
+                <input id="instagramAdsSpaceCampHQ" type="number" step="0.01" oninput="updateBudget()">
+              </div>
+            </div>
+            <label for="physicalFlyers">Physical Flyers</label>
+            <input id="physicalFlyers" type="number" step="0.01" oninput="updateBudget()">
+            <label for="eventbriteAds">Eventbrite Ads</label>
+            <input id="eventbriteAds" type="number" step="0.01" oninput="updateBudget()">
+          </div>
+        </div>
+
+
+        <!-- -------------------------
+            COLLAPSIBLE: STAFF
+        -------------------------- -->
+        <div class="collapsible" id="col_staff">
+            <div class="collapsible-header" onclick="toggleCollapse('col_staff')">
+            <span class="arrow">▸</span> Staff
+            </div>
+            <div class="collapsible-content">
+            <label>Door:</label>
+            <input id="doorStaff" type="number" step="0.01" oninput="updateBudget()">
+            <label>Merch Table:</label>
+            <input id="merchTable" type="number" step="0.01" oninput="updateBudget()">
+            <label>Transportation:</label>
+            <input id="transportation" type="number" step="0.01" oninput="updateBudget()">
+            <div class="quantity-row">
+                <label>Number of Show Runners:</label>
+                <input id="numShowRunners" type="number" min="0" max="10" value="0"
+                    onchange="regenerateShowRunners()">
+            </div>
+            <div id="showRunnerInputs"></div>
+            </div>
+        </div>
+
+        <!-- -------------------------
+            COLLAPSIBLE: OTHER CATEGORIES
+        -------------------------- -->
+        <div class="collapsible" id="col_other">
+            <div class="collapsible-header" onclick="toggleCollapse('col_other')">
+            <span class="arrow">▸</span> Other
+            </div>
+            <div class="collapsible-content">
+            <div class="quantity-row">
+                <label>Number of Other Categories:</label>
+                <input id="numOtherCategories" type="number" min="0" max="10" value="0"
+                    onchange="regenerateOtherCategories()">
+            </div>
+            <div id="allOtherCategories"></div>
+            </div>
+        </div>
+
+        <!-- -------------------------
+            COLLAPSIBLE: SALES
+        -------------------------- -->
+        <div class="collapsible" id="col_sales">
+            <div class="collapsible-header" onclick="toggleCollapse('col_sales')">
+            <span class="arrow">▸</span> Incoming Sales
+            </div>
+            <div class="collapsible-content">
+            <label>Eventbrite Sales:</label>
+            <input id="eventbriteSales" type="number" step="0.01" oninput="updateBudget()">
+            <label>DJ Presales:</label>
+            <input id="djPresales" type="number" step="0.01" oninput="updateBudget()">
+            <label>Promo Team:</label>
+            <input id="promoTeam" type="number" step="0.01" oninput="updateBudget()">
+            <label>Door Sales:</label>
+            <input id="doorSales" type="number" step="0.01" oninput="updateBudget()">
+            <div class="quantity-row">
+                <label>Number of Merch Vendors:</label>
+                <input id="numMerchVendors" type="number" min="0" max="10" value="0"
+                    onchange="regenerateVendors()">
+            </div>
+            <div id="merchVendorInputs"></div>
+            <label>Merch Sold:</label>
+            <input id="merchSold" type="number" step="0.01" oninput="updateBudget()">
+            </div>
+        </div>
+
+        <!-- -------------------------
+            CONTROLS
+        -------------------------- -->
+        <div class="controls">
+            <button type="button" onclick="updateBudget()">Update Chart</button>
+            <button type="button" onclick="resetForm()">Reset</button>
+            <button type="button" onclick="downloadCSV()">Export CSV</button>
+            <button type="button" onclick="triggerImport()">Import CSV</button>
+            <button type="button" onclick="downloadAll()">Download All</button>
+            <button type="button" onclick="handleSaveBudgetToServer()">Save to Server</button>
+        </div>
+        <!-- Hidden File Input -->
+        <input id="csvFileInput" type="file" accept=".csv" style="display:none">
+        </form>
+    </div>
+
+    <!-- =========================
+        RIGHT COLUMN: CHARTS
+    ========================== -->
+    <aside class="chart-panel">
+        <section class="charts-section">
+        <!-- Title above charts -->
+        <div id="chartsShowTitle" class="charts-title">UNTITLED EVENT</div>
+        <div class="charts-grid">
+            <div class="chart-card">
+            <div class="chart-subtitle">Expenses</div>
+            <div class="chart-canvas-wrap">
+                <canvas id="expensesChart"></canvas>
+            </div>
+            </div>
+            <div class="chart-card">
+            <div class="chart-subtitle">Sales</div>
+            <div class="chart-canvas-wrap">
+                <canvas id="salesChart"></canvas>
+            </div>
+            </div>
+        </div>
+        <!-- Download Charts button -->
+        <div class="chart-actions">
+            <button type="button" onclick="downloadChartsPNG()">Download Charts PNG</button>
+        </div>
+        </section>
+    </aside>
+    </div>
+</div>
+
+<!-- Load Modules (order matters!) -->
+<script type="module" src="js/modules/state.js"></script>
+<script type="module" src="js/modules/utils.js"></script>
+<script type="module" src="js/modules/repeaters.js"></script>
+<script type="module" src="js/modules/budgetCalculator.js"></script>
+<script type="module" src="js/modules/charts.js"></script>
+<script type="module" src="js/modules/textPreview.js"></script>
+<script type="module" src="js/modules/csv.js"></script>
+<script type="module" src="js/modules/serverLoad.js"></script>
+<script type="module" src="js/uiHandlers.js"></script>
+<script type="module" src="js/main.js"></script>
+
+</body>
+</html>
