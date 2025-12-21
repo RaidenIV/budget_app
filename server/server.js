@@ -5,6 +5,7 @@ const path = require('path');
 
 const app = express();
 
+// IMPORTANT: Serve static files BEFORE other middleware
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
 app.use(cors({
@@ -40,8 +41,10 @@ async function connectDB() {
   }
 }
 
+// API Routes - these must come AFTER static files
+
 // Health check
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Budget App Server is running',
@@ -149,7 +152,8 @@ async function startServer() {
   // Start server regardless of DB connection
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server running on port ${PORT}`);
-    console.log(`📡 Health check: http://localhost:${PORT}/`);
+    console.log(`📡 Health check: http://localhost:${PORT}/api`);
+    console.log(`🌐 Frontend: http://localhost:${PORT}/`);
     if (dbConnected) {
       console.log('🗄️  MongoDB: Connected and ready');
     } else {
@@ -159,5 +163,3 @@ async function startServer() {
 }
 
 startServer();
-
-
