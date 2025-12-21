@@ -2,6 +2,7 @@
 
 import { state } from './modules/state.js';
 import { buildChartsPngFileName } from './modules/utils.js';
+
 import {
   regenerateHeadliners,
   regenerateLocalDJs,
@@ -11,17 +12,28 @@ import {
   regenerateOtherCategories,
   regenerateOtherItems
 } from './modules/repeaters.js';
+
 import { calculateBudget, updateSummaryDisplay } from './modules/budgetCalculator.js';
 import { updateCharts, downloadChartsPNG } from './modules/charts.js';
-import { updateTextPreview, copyTextPreview, exportTextPreviewTxt } from './modules/textPreview.js';
+
+import {
+  updateTextPreview,
+  copyTextPreview,
+  exportTextPreviewTxt
+} from './modules/textPreview.js';
+
 import { downloadCSV, setupCSVImport, triggerImport } from './modules/csv.js';
+
+// NEW: server load + selector population
+import { populateBudgetSelector, loadBudgetFromServer } from './modules/serverLoad.js';
 
 // Main budget update function
 export function updateBudget() {
   const budgetData = calculateBudget();
+
   updateSummaryDisplay(budgetData);
   updateTextPreview(budgetData);
-  
+
   updateCharts(
     {
       Headliners: budgetData.expenses.Headliners,
@@ -98,6 +110,7 @@ export function downloadAll() {
   updateBudget();
   downloadCSV();
   exportTextPreviewTxt();
+
   setTimeout(() => {
     downloadChartsPNG(buildChartsPngFileName());
   }, 150);
@@ -108,6 +121,26 @@ export function toggleCollapse(id) {
   const section = document.getElementById(id);
   if (!section) return;
   section.classList.toggle("open");
+}
+
+/**
+ * Build the regenerators map used by CSV import and server-loaded CSV.
+ * Some code paths may refer to "vendors" vs "merchVendors", so we provide both.
+ */
+function buildRegenerators() {
+  return {
+    headliners: () => regenerateHeadliners(updateBudget),
+    localDJs: () => regenerateLocalDJs(updateBudget),
+    cdjs: () => regenerateCDJs(updateBudget),
+    showRunners: () => regenerateShowRunners(updateBudget),
+
+    // Merch vendors are handled by the same repeater in this codebase
+    vendors: () => regenerateVendors(updateBudget),
+    merchVendors: () => regenerateVendors(updateBudget),
+
+    otherCategories: () => regenerateOtherCategories(updateBudget),
+    otherItems: (c) => regenerateOtherItems(c, updateBudget)
+  };
 }
 
 // CRITICAL: Make ALL functions globally available for HTML onclick handlers
@@ -131,31 +164,40 @@ window.regenerateVendors = () => regenerateVendors(updateBudget);
 window.regenerateOtherCategories = () => regenerateOtherCategories(updateBudget);
 window.regenerateOtherItems = (catId) => regenerateOtherItems(catId, updateBudget);
 
+// NEW: this is what your <select onchange="handleBudgetSelection(this.value)"> needs
+window.handleBudgetSelection = async (budgetId) => {
+  if (!budgetId) return;
+
+  try {
+    const regenerators = buildRegenerators();
+    await loadBudgetFromServer(budgetId, regenerators, updateBudget);
+  } catch (err) {
+    console.error('Failed to load selected budget:', err);
+  }
+};
+
 // Initialize on DOM ready
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log('🚀 Budget App Initializing...');
-  
+
   // Verify functions are accessible
   console.log('✅ updateBudget available:', typeof window.updateBudget === 'function');
   console.log('✅ regenerateHeadliners available:', typeof window.regenerateHeadliners === 'function');
-  
+  console.log('✅ handleBudgetSelection available:', typeof window.handleBudgetSelection === 'function');
+
+  // Populate the "Load Previous Budget" selector
+  try {
+    await populateBudgetSelector("budgetSelector");
+  } catch (e) {
+    console.error("Failed to populate budget selector:", e);
+  }
+
   // Setup CSV import handler
-  setupCSVImport(
-    {
-      headliners: () => regenerateHeadliners(updateBudget),
-      localDJs: () => regenerateLocalDJs(updateBudget),
-      cdjs: () => regenerateCDJs(updateBudget),
-      showRunners: () => regenerateShowRunners(updateBudget),
-      vendors: () => regenerateVendors(updateBudget),
-      otherCategories: () => regenerateOtherCategories(updateBudget),
-      otherItems: (c) => regenerateOtherItems(c, updateBudget)
-    },
-    updateBudget
-  );
+  setupCSVImport(buildRegenerators(), updateBudget);
 
   // Initialize with one headliner
   regenerateHeadliners(updateBudget);
   updateBudget();
-  
+
   console.log('✅ Budget App Ready!');
 });
