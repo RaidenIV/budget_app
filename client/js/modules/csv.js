@@ -1,15 +1,13 @@
 // csv.js - CSV import/export utilities
 //
-// Format (v4):
+// Format:
 //   XODIA_BUDGET_VERSION,4
 //   Show Title,<value>
 //   Show Date,<value>
 //   ID:<elementId>,<value>
-//   ...
 
 const CSV_VERSION = 4;
 
-// IDs that must be applied BEFORE regenerating dynamic UI
 const COUNT_FIELD_IDS = [
   "numHeadliners",
   "numLocalDJs",
@@ -19,7 +17,6 @@ const COUNT_FIELD_IDS = [
   "numMerchVendors",
 ];
 
-// Inputs we do NOT want to persist
 const EXCLUDE_IDS = new Set([
   "budgetSelector",
   "csvFileInput",
@@ -40,8 +37,7 @@ function csvEscape(v) {
   return s;
 }
 
-// Very small CSV row parser for 2-column CSV, supports quotes.
-// If there are more than 2 columns, it joins the remaining columns into col2.
+// 2-column CSV parser that supports quotes
 function parseCsvRows2col(csvText) {
   const rows = [];
   const lines = String(csvText ?? "")
@@ -92,19 +88,11 @@ function parseCsvRows2col(csvText) {
 }
 
 function getShowTitle() {
-  return (
-    document.getElementById("showTitle")?.value ??
-    document.getElementById("show_name")?.value ??
-    ""
-  ).trim();
+  return (document.getElementById("showTitle")?.value ?? "").trim();
 }
 
 function getShowDate() {
-  return (
-    document.getElementById("showDate")?.value ??
-    document.getElementById("show_date")?.value ??
-    ""
-  ).trim();
+  return (document.getElementById("showDate")?.value ?? "").trim();
 }
 
 function sanitizeFilePart(s) {
@@ -133,10 +121,6 @@ function ensureFileInput() {
   return fileInputEl;
 }
 
-/**
- * Build a complete CSV string of the current form values.
- * Exported so BOTH Download and Save-to-server use the same exact data.
- */
 export function buildCSVString() {
   const lines = [];
   lines.push(`XODIA_BUDGET_VERSION,${CSV_VERSION}`);
@@ -164,6 +148,9 @@ export function buildCSVString() {
       if (type === "file") continue;
     }
 
+    // Avoid duplicating showTitle/showDate as ID: rows
+    if (el.id === "showTitle" || el.id === "showDate") continue;
+
     let val = "";
     const tag = el.tagName.toLowerCase();
 
@@ -181,18 +168,12 @@ export function buildCSVString() {
       val = el.value ?? "";
     }
 
-    // Avoid duplicating showTitle/showDate as ID: rows (we already have label lines)
-    if (el.id === "showTitle" || el.id === "showDate") continue;
-
     lines.push(`ID:${el.id},${csvEscape(val)}`);
   }
 
   return lines.join("\n") + "\n";
 }
 
-/**
- * Download the CSV to the user's machine.
- */
 export function downloadCSV() {
   const csvText = buildCSVString();
 
@@ -216,15 +197,10 @@ export function downloadCSV() {
   return csvText;
 }
 
-/**
- * Import CSV into the form.
- * Signature matches serverLoad.js: loadCSV(csvText, regenerators, updateBudgetFn)
- */
 export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
   const rows = parseCsvRows2col(csvText);
   if (!rows.length) return;
 
-  // Backward compatibility for old label rows
   const LABEL_TO_ID = {
     "Show Title": "showTitle",
     "Show Date": "showDate",
@@ -232,10 +208,9 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
 
   const kv = new Map();
 
-  // 1) Build key/value map
+  // Build key/value map
   for (const [rawK, rawV] of rows) {
     if (!rawK) continue;
-
     if (rawK === "XODIA_BUDGET_VERSION") continue;
 
     if (rawK.startsWith("ID:")) {
@@ -249,54 +224,47 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
       continue;
     }
 
-    // Legacy: treat first column as an element id
+    // Legacy support
     kv.set(rawK, rawV ?? "");
   }
 
-  // Helper to set a value by id if element exists
-  const setIfExists = (id, value) => {
-    const el = document.getElementById(id);
-    if (!el) return false;
-    el.value = value ?? "";
-    return true;
-  };
-
-  // 2) Apply TOP-LEVEL count fields first
+  // Apply count fields first
   for (const id of COUNT_FIELD_IDS) {
     if (!kv.has(id)) continue;
-    setIfExists(id, kv.get(id));
+    const el = document.getElementById(id);
+    if (el) el.value = kv.get(id);
   }
 
-  // 3) Regenerate top-level dynamic UI
+  // Regenerate top-level dynamic inputs
   try {
     regenerators.headliners?.();
     regenerators.localDJs?.();
     regenerators.cdjs?.();
     regenerators.showRunners?.();
     regenerators.otherCategories?.();
-    // Vendors (defensive: some code passes vendors, some passes merchVendors)
     regenerators.vendors?.();
     regenerators.merchVendors?.();
   } catch (e) {
     console.error("Regenerator error (top-level) during loadCSV:", e);
   }
 
-  // 4) IMPORTANT: Apply per-category item counts BEFORE generating items
-  const numOtherCategories = Number(
-    document.getElementById("numOtherCategories")?.value || 0
-  );
-
-  if (Number.isFinite(numOtherCategories) && numOtherCategories > 0) {
-    for (let c = 1; c <= numOtherCategories; c++) {
+  // IMPORTANT: set per-category counts BEFORE generating other items
+  const otherCount = Number(document.getElementById("numOtherCategories")?.value || 0);
+  if (Number.isFinite(otherCount) && otherCount > 0) {
+    for (let c = 1; c <= otherCount; c++) {
       const countId = `otherCategoryCount_${c}`;
-      if (kv.has(countId)) {
-        setIfExists(countId, kv.get(countId));
-      }
+      const nameId = `otherCategoryName_${c}`;
+
+      const countEl = document.getElementById(countId);
+      const nameEl = document.getElementById(nameId);
+
+      if (countEl && kv.has(countId)) countEl.value = kv.get(countId);
+      if (nameEl && kv.has(nameId)) nameEl.value = kv.get(nameId);
     }
 
-    // 5) Now generate the other items AFTER counts are applied
+    // Now generate item rows
     try {
-      for (let c = 1; c <= numOtherCategories; c++) {
+      for (let c = 1; c <= otherCount; c++) {
         regenerators.otherItems?.(c);
       }
     } catch (e) {
@@ -304,7 +272,7 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
     }
   }
 
-  // 6) Apply all remaining values (now that inputs should exist)
+  // Apply all values (now that dynamic inputs exist)
   for (const [id, value] of kv.entries()) {
     if (EXCLUDE_IDS.has(id)) continue;
 
@@ -319,11 +287,9 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
       if (type === "checkbox") {
         el.checked = value === "1" || value === "true" || value === "yes";
       } else if (type === "radio") {
-        const name = el.name;
-        if (!name) continue;
-        const group = document.querySelectorAll(
-          `input[type="radio"][name="${name}"]`
-        );
+        const groupName = el.name;
+        if (!groupName) continue;
+        const group = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
         for (const r of group) r.checked = r.value === value;
       } else {
         el.value = value ?? "";
@@ -333,7 +299,7 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
     }
   }
 
-  // 7) Update UI/calcs
+  // Update UI/calcs
   try {
     if (typeof updateBudgetFn === "function") updateBudgetFn();
     else if (typeof window.updateBudget === "function") window.updateBudget();
@@ -342,9 +308,6 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
   }
 }
 
-/**
- * Wire up the "Import" flow.
- */
 export function setupCSVImport(regenerators = {}, updateBudgetFn = null) {
   const input = ensureFileInput();
 
