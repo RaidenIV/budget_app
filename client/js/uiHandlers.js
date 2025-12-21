@@ -1,55 +1,266 @@
-// uiHandlers.js - Additional UI handlers for server budget operations
-// NOTE: handleBudgetSelection is now defined in main.js and auto-loads on selection
+// uiHandlers.js - UI event handlers for server budget loading
 
+import {
+  loadBudgetFromServer,
+  fetchBudgetList,
+  populateBudgetSelector,
+  saveBudgetToServer,
+  searchBudgets,
+  deleteBudgetFromServer
+} from './modules/serverLoad.js';
+
+import { updateBudget } from './main.js';
 import { buildCSVString } from './modules/csv.js';
-import { saveBudgetToServer } from './modules/serverLoad.js';
-import { populateBudgetSelector } from './modules/serverLoad.js';
+
+// Store currently selected budget ID
+let selectedBudgetId = null;
+
+/**
+ * Initialize the budget selector dropdown
+ */
+export async function initBudgetSelector() {
+  await populateBudgetSelector('budgetSelector');
+}
+
+/**
+ * Regenerators map (must match your repeater/global function names)
+ */
+function buildRegenerators() {
+  return {
+    headliners: () => window.regenerateHeadliners?.(),
+    localDJs: () => window.regenerateLocalDJs?.(),
+    cdjs: () => window.regenerateCDJs?.(),
+    showRunners: () => window.regenerateShowRunners?.(),
+
+    // Some codepaths call these differently; keep both
+    vendors: () => window.regenerateVendors?.(),
+    merchVendors: () => window.regenerateVendors?.(),
+
+    otherCategories: () => window.regenerateOtherCategories?.(),
+    otherItems: (c) => window.regenerateOtherItems?.(c),
+  };
+}
+
+/**
+ * Handle budget selection from dropdown
+ * IMPORTANT: auto-load immediately (your UI does not show a separate Load button).
+ */
+export function handleBudgetSelection(budgetId) {
+  selectedBudgetId = budgetId || null;
+  console.log('Budget selected:', selectedBudgetId);
+
+  if (!selectedBudgetId) return;
+
+  // Auto-load on selection
+  handleLoadSelectedBudget().catch((err) => {
+    console.error('Auto-load failed:', err);
+    alert(`Failed to load budget: ${err.message}`);
+  });
+}
+
+/**
+ * Load the selected budget
+ */
+export async function handleLoadSelectedBudget() {
+  if (!selectedBudgetId) {
+    alert('Please select a budget first');
+    return;
+  }
+
+  const regenerators = buildRegenerators();
+  await loadBudgetFromServer(selectedBudgetId, regenerators, updateBudget);
+}
+
+/**
+ * Search budgets with filters
+ */
+export async function handleSearchBudgets() {
+  const name = document.getElementById('searchName')?.value || '';
+  const dateFrom = document.getElementById('searchDateFrom')?.value || '';
+  const dateTo = document.getElementById('searchDateTo')?.value || '';
+
+  try {
+    const results = await searchBudgets({ name, dateFrom, dateTo });
+    displaySearchResults(results);
+  } catch (error) {
+    alert('Search failed: ' + error.message);
+  }
+}
+
+/**
+ * Display search results in the UI
+ */
+function displaySearchResults(budgets) {
+  const resultsContainer = document.getElementById('budgetResults');
+  if (!resultsContainer) return;
+
+  if (budgets.length === 0) {
+    resultsContainer.innerHTML = `<p>No budgets found</p>`;
+    return;
+  }
+
+  resultsContainer.innerHTML = budgets.map(budget => `
+    <div class="budget-result">
+      <div><strong>${budget.name ?? 'Untitled'}</strong></div>
+      <div>${budget.date ?? ''}</div>
+      <div class="button-row">
+        <button type="button" onclick="loadBudgetById('${budget.id || budget._id}')">Load</button>
+        <button type="button" class="btn-danger" onclick="deleteBudgetById('${budget.id || budget._id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/**
+ * Load a specific budget by ID
+ */
+export async function loadBudgetById(budgetId) {
+  selectedBudgetId = budgetId || null;
+  await handleLoadSelectedBudget();
+}
+
+/**
+ * Delete a budget with confirmation
+ */
+export async function deleteBudgetById(budgetId) {
+  if (!confirm('Are you sure you want to delete this budget?')) return;
+
+  try {
+    await deleteBudgetFromServer(budgetId);
+    alert('Budget deleted successfully');
+
+    // Refresh the list if present
+    if (document.getElementById('searchName')) await handleSearchBudgets();
+    if (document.getElementById('budgetSelector')) await initBudgetSelector();
+
+    // Clear selection if we deleted the selected one
+    if (selectedBudgetId === budgetId) {
+      selectedBudgetId = null;
+      const sel = document.getElementById('budgetSelector');
+      if (sel) sel.value = '';
+    }
+  } catch (error) {
+    alert('Failed to delete budget: ' + error.message);
+  }
+}
 
 /**
  * Save current budget to server
- * Called by the "Save" button in the UI
+ * CRITICAL FIX: use buildCSVString() so ALL fields are included (by element id).
  */
 export async function handleSaveBudgetToServer() {
-  const showTitle = document.getElementById('showTitle')?.value || '';
-  const showDate = document.getElementById('showDate')?.value || '';
+  const showTitle = document.getElementById('showTitle')?.value?.trim() || '';
+  const showDate = document.getElementById('showDate')?.value?.trim() || '';
 
-  // Validate
-  if (!showTitle || showTitle.trim() === '' || showTitle === 'Untitled Event') {
+  if (!showTitle) {
     alert('Please enter a show title before saving');
     return;
   }
 
   try {
-    // Use the SAME CSV generation as downloadCSV
-    const csvData = buildCSVString();
+    // Ensure the UI/calcs are current before saving
+    if (typeof window.updateBudget === 'function') window.updateBudget();
 
-    console.log('Saving budget to server...');
-    console.log('Title:', showTitle);
-    console.log('Date:', showDate);
-    console.log('CSV length:', csvData.length);
+    const csvData = buildCSVString();
 
     const result = await saveBudgetToServer(csvData, {
       name: showTitle,
-      date: showDate
+      date: showDate || new Date().toISOString().split('T')[0]
     });
 
     console.log('Save result:', result);
-    alert('✅ Budget saved successfully!');
 
-    // Refresh the budget selector to show the newly saved budget
-    await populateBudgetSelector('budgetSelector');
+    // Refresh selector if it exists
+    if (document.getElementById('budgetSelector')) {
+      await initBudgetSelector();
 
+      // Select the newly saved budget if server returned an id
+      if (result?.id) {
+        const sel = document.getElementById('budgetSelector');
+        if (sel) sel.value = String(result.id);
+        selectedBudgetId = String(result.id);
+      }
+    }
+
+    alert('Budget saved to server successfully!');
   } catch (error) {
-    console.error('Failed to save budget:', error);
-    alert('❌ Failed to save budget: ' + error.message);
+    alert('Failed to save budget: ' + error.message);
+    console.error('Save error:', error);
   }
 }
 
-// Expose to window for HTML onclick handlers
+/**
+ * Modal handlers
+ */
+export function openBudgetLoadModal() {
+  const modal = document.getElementById('budgetLoadModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    loadModalBudgetList();
+  }
+}
+
+export function closeBudgetLoadModal() {
+  const modal = document.getElementById('budgetLoadModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function loadModalBudgetList() {
+  try {
+    const budgets = await fetchBudgetList();
+    displayModalBudgetList(budgets);
+  } catch (error) {
+    console.error('Error loading modal budget list:', error);
+  }
+}
+
+function displayModalBudgetList(budgets) {
+  const listContainer = document.getElementById('modalBudgetList');
+  if (!listContainer) return;
+
+  if (budgets.length === 0) {
+    listContainer.innerHTML = `<p>No saved budgets found</p>`;
+    return;
+  }
+
+  listContainer.innerHTML = budgets.map(budget => `
+    <div class="modal-budget-row" onclick="loadBudgetAndCloseModal('${budget.id || budget._id}')">
+      <div><strong>${budget.name ?? 'Untitled'}</strong></div>
+      <div>${budget.date ?? ''}</div>
+    </div>
+  `).join('');
+}
+
+export async function loadBudgetAndCloseModal(budgetId) {
+  await loadBudgetById(budgetId);
+  closeBudgetLoadModal();
+}
+
+export async function handleModalSearch() {
+  const searchTerm = document.getElementById('modalSearchName')?.value || '';
+  try {
+    const results = await searchBudgets({ name: searchTerm });
+    displayModalBudgetList(results);
+  } catch (error) {
+    alert('Search failed: ' + error.message);
+  }
+}
+
+// Make functions globally available for inline HTML handlers
+window.handleBudgetSelection = handleBudgetSelection;
+window.handleLoadSelectedBudget = handleLoadSelectedBudget;
+window.handleSearchBudgets = handleSearchBudgets;
+window.loadBudgetById = loadBudgetById;
+window.deleteBudgetById = deleteBudgetById;
 window.handleSaveBudgetToServer = handleSaveBudgetToServer;
+window.openBudgetLoadModal = openBudgetLoadModal;
+window.closeBudgetLoadModal = closeBudgetLoadModal;
+window.loadBudgetAndCloseModal = loadBudgetAndCloseModal;
+window.handleModalSearch = handleModalSearch;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('💾 Save/Load UI Handlers Ready!');
-  console.log('✅ handleSaveBudgetToServer available:', typeof window.handleSaveBudgetToServer === 'function');
+  if (document.getElementById('budgetSelector')) {
+    initBudgetSelector().catch((e) => console.error('initBudgetSelector failed:', e));
+  }
 });
