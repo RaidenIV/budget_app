@@ -10,7 +10,7 @@ import {
 } from './modules/serverLoad.js';
 
 import { updateBudget } from './main.js';
-import { downloadCSV } from './modules/csv.js';
+import { buildCSVString } from './modules/csv.js';
 
 // Store currently selected budget ID
 let selectedBudgetId = null;
@@ -24,10 +24,18 @@ export async function initBudgetSelector() {
 
 /**
  * Handle budget selection from dropdown
+ * IMPORTANT: Your HTML has NO "Load" button, so selection MUST trigger loading.
  */
 export function handleBudgetSelection(budgetId) {
-  selectedBudgetId = budgetId;
-  console.log('Budget selected:', budgetId);
+  selectedBudgetId = budgetId || null;
+  console.log('Budget selected:', selectedBudgetId);
+
+  // Auto-load immediately on selection
+  if (selectedBudgetId) {
+    handleLoadSelectedBudget().catch((err) => {
+      console.error('Auto-load failed:', err);
+    });
+  }
 }
 
 /**
@@ -40,20 +48,21 @@ export async function handleLoadSelectedBudget() {
   }
 
   const regenerators = {
-    headliners: () => window.regenerateHeadliners(),
-    localDJs: () => window.regenerateLocalDJs(),
-    cdjs: () => window.regenerateCDJs(),
-    showRunners: () => window.regenerateShowRunners(),
-    vendors: () => window.regenerateVendors(),
-    otherCategories: () => window.regenerateOtherCategories(),
-    otherItems: (c) => window.regenerateOtherItems(c)
+    headliners: () => window.regenerateHeadliners?.(),
+    localDJs: () => window.regenerateLocalDJs?.(),
+    cdjs: () => window.regenerateCDJs?.(),
+    showRunners: () => window.regenerateShowRunners?.(),
+    vendors: () => window.regenerateVendors?.(),
+    merchVendors: () => window.regenerateVendors?.(), // defensive alias
+    otherCategories: () => window.regenerateOtherCategories?.(),
+    otherItems: (c) => window.regenerateOtherItems?.(c)
   };
 
   await loadBudgetFromServer(selectedBudgetId, regenerators, updateBudget);
 }
 
 /**
- * Search budgets with filters
+ * Search budgets with filters (if you use the search UI)
  */
 export async function handleSearchBudgets() {
   const name = document.getElementById('searchName')?.value || '';
@@ -69,24 +78,26 @@ export async function handleSearchBudgets() {
 }
 
 /**
- * Display search results in the UI
+ * Display search results in the UI (if you use the search UI)
  */
 function displaySearchResults(budgets) {
   const resultsContainer = document.getElementById('budgetResults');
   if (!resultsContainer) return;
 
   if (budgets.length === 0) {
-    resultsContainer.innerHTML = '<p>No budgets found</p>';
+    resultsContainer.innerHTML = `
+      <p>No budgets found</p>
+    `;
     return;
   }
 
   resultsContainer.innerHTML = budgets.map(budget => `
-    <div class="budget-item">
-      <div class="budget-item-name">${budget.name}</div>
-      <div class="budget-item-date">${budget.date}</div>
-      <div class="budget-item-actions">
-        <button onclick="loadBudgetById('${budget.id}')">Load</button>
-        <button onclick="deleteBudgetById('${budget.id}')">Delete</button>
+    <div class="budget-result">
+      <div><strong>${budget.name}</strong></div>
+      <div>${budget.date}</div>
+      <div class="button-row">
+        <button type="button" onclick="loadBudgetById('${budget.id || budget._id}')">Load</button>
+        <button type="button" class="btn-danger" onclick="deleteBudgetById('${budget.id || budget._id}')">Delete</button>
       </div>
     </div>
   `).join('');
@@ -96,37 +107,29 @@ function displaySearchResults(budgets) {
  * Load a specific budget by ID
  */
 export async function loadBudgetById(budgetId) {
-  const regenerators = {
-    headliners: () => window.regenerateHeadliners(),
-    localDJs: () => window.regenerateLocalDJs(),
-    cdjs: () => window.regenerateCDJs(),
-    showRunners: () => window.regenerateShowRunners(),
-    vendors: () => window.regenerateVendors(),
-    otherCategories: () => window.regenerateOtherCategories(),
-    otherItems: (c) => window.regenerateOtherItems(c)
-  };
-
-  await loadBudgetFromServer(budgetId, regenerators, updateBudget);
+  selectedBudgetId = budgetId || null;
+  await handleLoadSelectedBudget();
 }
 
 /**
  * Delete a budget with confirmation
  */
 export async function deleteBudgetById(budgetId) {
-  if (!confirm('Are you sure you want to delete this budget?')) {
-    return;
-  }
+  if (!confirm('Are you sure you want to delete this budget?')) return;
 
   try {
     await deleteBudgetFromServer(budgetId);
     alert('Budget deleted successfully');
-    
-    // Refresh the list
-    if (document.getElementById('searchName')) {
-      await handleSearchBudgets();
-    }
-    if (document.getElementById('budgetSelector')) {
-      await initBudgetSelector();
+
+    // Refresh UI
+    if (document.getElementById('searchName')) await handleSearchBudgets();
+    if (document.getElementById('budgetSelector')) await initBudgetSelector();
+
+    // Clear selection if we deleted the selected one
+    if (selectedBudgetId === budgetId) {
+      selectedBudgetId = null;
+      const sel = document.getElementById('budgetSelector');
+      if (sel) sel.value = '';
     }
   } catch (error) {
     alert('Failed to delete budget: ' + error.message);
@@ -134,55 +137,42 @@ export async function deleteBudgetById(budgetId) {
 }
 
 /**
- * Generate CSV data from current form state
- */
-function generateCSVData() {
-  // This is a simplified version - the actual downloadCSV() function handles this
-  // We'll use that instead
-  return '';
-}
-
-/**
  * Save current budget to server
+ * CRITICAL FIX: Use buildCSVString() so the saved CSV contains ALL form fields.
  */
 export async function handleSaveBudgetToServer() {
-  const showTitle = document.getElementById('showTitle')?.value || 'Untitled Event';
-  const showDate = document.getElementById('showDate')?.value || '';
+  const showTitle = document.getElementById('showTitle')?.value?.trim() || '';
+  const showDate = document.getElementById('showDate')?.value?.trim() || '';
 
-  if (!showTitle || showTitle === 'Untitled Event') {
+  if (!showTitle) {
     alert('Please enter a show title before saving');
     return;
   }
 
   try {
-    // We need to generate the CSV data
-    // Call the downloadCSV function to get the data, but intercept it
-    // For now, let's create a simple version
-    const form = document.getElementById('budgetForm');
-    const formData = new FormData(form);
-    
-    // Build a simple CSV representation
-    let csvData = 'XODIA_BUDGET_VERSION,3\n';
-    csvData += `Show Title,${showTitle}\n`;
-    csvData += `Show Date,${showDate}\n`;
-    
-    // Add basic form data
-    for (let [key, value] of formData.entries()) {
-      csvData += `${key},${value}\n`;
-    }
+    // Ensure totals/text are up-to-date before saving
+    if (typeof window.updateBudget === 'function') window.updateBudget();
+
+    const csvData = buildCSVString();
 
     const result = await saveBudgetToServer(csvData, {
       name: showTitle,
-      date: showDate
+      date: showDate || new Date().toISOString().split('T')[0]
     });
 
-    alert('Budget saved to server successfully!');
     console.log('Save result:', result);
-    
-    // Refresh selector if it exists
+
+    // Refresh selector and select the newly saved budget
     if (document.getElementById('budgetSelector')) {
       await initBudgetSelector();
+      const sel = document.getElementById('budgetSelector');
+      if (sel && result?.id) {
+        sel.value = String(result.id);
+        selectedBudgetId = String(result.id);
+      }
     }
+
+    alert('Budget saved to server successfully!');
   } catch (error) {
     alert('Failed to save budget: ' + error.message);
     console.error('Save error:', error);
@@ -190,7 +180,7 @@ export async function handleSaveBudgetToServer() {
 }
 
 /**
- * Modal handlers
+ * Modal handlers (if you use the modal UI)
  */
 export function openBudgetLoadModal() {
   const modal = document.getElementById('budgetLoadModal');
@@ -219,14 +209,16 @@ function displayModalBudgetList(budgets) {
   if (!listContainer) return;
 
   if (budgets.length === 0) {
-    listContainer.innerHTML = '<p>No saved budgets found</p>';
+    listContainer.innerHTML = `
+      <p>No saved budgets found</p>
+    `;
     return;
   }
 
   listContainer.innerHTML = budgets.map(budget => `
-    <div class="budget-item" onclick="loadBudgetAndCloseModal('${budget.id}')">
-      <div class="budget-item-name">${budget.name}</div>
-      <div class="budget-item-date">${budget.date}</div>
+    <div class="modal-budget-row" onclick="loadBudgetAndCloseModal('${budget.id || budget._id}')">
+      <div><strong>${budget.name}</strong></div>
+      <div>${budget.date}</div>
     </div>
   `).join('');
 }
@@ -238,7 +230,6 @@ export async function loadBudgetAndCloseModal(budgetId) {
 
 export async function handleModalSearch() {
   const searchTerm = document.getElementById('modalSearchName')?.value || '';
-  
   try {
     const results = await searchBudgets({ name: searchTerm });
     displayModalBudgetList(results);
@@ -247,7 +238,7 @@ export async function handleModalSearch() {
   }
 }
 
-// CRITICAL: Make ALL functions globally available for HTML onclick handlers
+// Make functions globally available for inline HTML handlers
 window.handleBudgetSelection = handleBudgetSelection;
 window.handleLoadSelectedBudget = handleLoadSelectedBudget;
 window.handleSearchBudgets = handleSearchBudgets;
@@ -261,16 +252,9 @@ window.handleModalSearch = handleModalSearch;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🔌 UI Handlers Initializing...');
-  
-  // Verify functions are accessible
-  console.log('✅ handleBudgetSelection available:', typeof window.handleBudgetSelection === 'function');
-  console.log('✅ handleSaveBudgetToServer available:', typeof window.handleSaveBudgetToServer === 'function');
-  
-  // Initialize budget selector if it exists
+  console.log('🧩 UI Handlers Initializing...');
   if (document.getElementById('budgetSelector')) {
-    initBudgetSelector();
+    initBudgetSelector().catch((e) => console.error('initBudgetSelector failed:', e));
   }
-  
   console.log('✅ UI Handlers Ready!');
 });
