@@ -16,6 +16,7 @@
 </head>
 
 <body>
+    <button class="back-button" onclick="window.location.href='https://www.xodiamediagroup.com/tools'">⬅</button>
 
 <div class="page-wrapper">
     <h1>Event Budget Tracker</h1>
@@ -27,14 +28,6 @@
     ========================== -->
     <aside class="preview-panel">
 
-        <!-- SUMMARY -->
-        <div id="summary">
-            <div class="summary-title">SUMMARY</div>
-            <p>Total Expenses: $<span id="totalExpenses">0</span></p>
-            <p>Total Incoming Sales: $<span id="totalRevenue">0</span></p>
-            <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
-        </div>
-
         <!-- SERVER LOAD SECTION -->
         <div class="server-load-section">
             <h3>Load Previous Budget</h3>
@@ -44,9 +37,20 @@
                 <option value="">-- Choose a budget --</option>
             </select>
             
-            <button type="button" onclick="handleLoadSelectedBudget()">Load Budget</button>
+            <div class="button-row">
+                <button type="button" onclick="handleSaveBudgetToServer()">Save</button>
+                <button type="button" class="btn-danger" onclick="resetForm()">Reset</button>
+            </div>
             
             <span id="loadStatus" class="load-status"></span>
+        </div>
+
+        <!-- SUMMARY -->
+        <div id="summary">
+            <div class="summary-title">SUMMARY</div>
+            <p>Total Expenses: $<span id="totalExpenses">0</span></p>
+            <p>Total Incoming Sales: $<span id="totalRevenue">0</span></p>
+            <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
         </div>
 
         <!-- TEXT BUDGET PREVIEW -->
@@ -261,12 +265,9 @@
             CONTROLS
         -------------------------- -->
         <div class="controls">
-            <button type="button" onclick="updateBudget()">Update Chart</button>
-            <button type="button" onclick="resetForm()">Reset</button>
-            <button type="button" onclick="downloadCSV()">Export CSV</button>
-            <button type="button" onclick="triggerImport()">Import CSV</button>
-            <button type="button" onclick="downloadAll()">Download All</button>
-            <button type="button" onclick="handleSaveBudgetToServer()">Save to Server</button>
+            <button type="button" onclick="downloadCSV()">Export</button>
+            <button type="button" onclick="triggerImport()">Import</button>
+            <button type="button" onclick="downloadAll()">Download</button>
         </div>
         <!-- Hidden File Input -->
         <input id="csvFileInput" type="file" accept=".csv" style="display:none">
@@ -296,24 +297,29 @@
         </div>
         <!-- Download Charts button -->
         <div class="chart-actions">
-            <button type="button" onclick="downloadChartsPNG()">Download Charts PNG</button>
+            <button type="button" onclick="downloadChartsPNG()">Download</button>
         </div>
         </section>
     </aside>
     </div>
 </div>
 
-<!-- Load Modules (order matters!) -->
+<!-- 1. State and utilities first -->
 <script type="module" src="js/modules/state.js"></script>
 <script type="module" src="js/modules/utils.js"></script>
+
+<!-- 2. Feature modules -->
 <script type="module" src="js/modules/repeaters.js"></script>
 <script type="module" src="js/modules/budgetCalculator.js"></script>
 <script type="module" src="js/modules/charts.js"></script>
 <script type="module" src="js/modules/textPreview.js"></script>
 <script type="module" src="js/modules/csv.js"></script>
+
+<!-- 3. Server loading (if using) -->
 <script type="module" src="js/modules/serverLoad.js"></script>
 <script type="module" src="js/uiHandlers.js"></script>
-<script type="module" src="js/main.js"></script>
 
+<!-- 4. Main controller LAST -->
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
