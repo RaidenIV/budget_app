@@ -48,6 +48,12 @@ export function resetForm() {
   const form = document.getElementById("budgetForm");
   if (form) form.reset();
 
+  // Reset the budget selector dropdown
+  const budgetSelector = document.getElementById("budgetSelector");
+  if (budgetSelector) {
+    budgetSelector.value = "";
+  }
+
   const numHeadliners = document.getElementById("numHeadliners");
   const numLocalDJs = document.getElementById("numLocalDJs");
   const numCDJs = document.getElementById("numCDJs");
@@ -104,7 +110,8 @@ export function toggleCollapse(id) {
   section.classList.toggle("open");
 }
 
-// Make functions globally available for HTML onclick handlers
+// CRITICAL: Make ALL functions globally available for HTML onclick handlers
+// Without these, buttons won't work!
 window.updateBudget = updateBudget;
 window.resetForm = resetForm;
 window.downloadCSV = downloadCSV;
@@ -126,6 +133,12 @@ window.regenerateOtherItems = (catId) => regenerateOtherItems(catId, updateBudge
 
 // Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+  console.log('🚀 Budget App Initializing...');
+  
+  // Verify functions are accessible
+  console.log('✅ updateBudget available:', typeof window.updateBudget === 'function');
+  console.log('✅ regenerateHeadliners available:', typeof window.regenerateHeadliners === 'function');
+  
   // Setup CSV import handler
   setupCSVImport(
     {
@@ -143,5 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize with one headliner
   regenerateHeadliners(updateBudget);
   updateBudget();
-
+  
+  console.log('✅ Budget App Ready!');
 });
