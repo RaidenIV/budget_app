@@ -120,20 +120,6 @@ select {
 }
 
 /* ----------------------------------------------------------
-   HIDE SPINNERS FOR NON-QUANTITY NUMBER INPUTS
----------------------------------------------------------- */
-/* Hide spinners for all number inputs except quantity inputs */
-input[type="number"]:not(.quantity-input)::-webkit-outer-spin-button,
-input[type="number"]:not(.quantity-input)::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-input[type="number"]:not(.quantity-input) {
-    -moz-appearance: textfield;
-}
-
-/* ----------------------------------------------------------
    QUANTITY ROWS
 ---------------------------------------------------------- */
 .quantity-row {
@@ -457,6 +443,7 @@ button:hover {
 
 .dynamic-input-group {
     margin-bottom: 12px;
+
 }
 
 /* ----------------------------------------------------------
@@ -473,16 +460,16 @@ button:hover {
 /* ----------------------------------------------------------
    BACK BUTTON
 ---------------------------------------------------------- */
-.back-button {
-    position: fixed;
-    top: 18px;
-    left: 18px;
-    background: #007BFF;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    z-index: 9999;
-    font-weight: 700;
-}
+    .back-button {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        background: #007BFF;
+        color: #fff;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 9999;
+        font-weight: 700;
+    }
