@@ -50,14 +50,17 @@
 
         <!-- SERVER LOAD SECTION -->
         <div class="server-load-section">
-            <h3>Load Previous Budget</h3>
+            <h3>Load/Save Budget</h3>
             
             <label for="budgetSelector">Select Budget:</label>
             <select id="budgetSelector" onchange="handleBudgetSelection(this.value)">
                 <option value="">-- Choose a budget --</option>
             </select>
             
-            <button type="button" onclick="handleLoadSelectedBudget()">Load Budget</button>
+            <div class="load-save-row">
+  <button type="button" onclick="handleLoadSelectedBudget()">Load Budget</button>
+  <button type="button" class="danger" onclick="handleSaveBudgetToServer()">Save</button>
+</div>
             
             <span id="loadStatus" class="load-status"></span>
         </div>
@@ -274,12 +277,11 @@
             CONTROLS
         -------------------------- -->
         <div class="controls">
-            <button type="button" onclick="updateBudget()">Update Chart</button>
-            <button type="button" onclick="resetForm()">Reset</button>
+            
+            <button type="button" class="danger" onclick="resetForm()">Reset</button>
             <button type="button" onclick="downloadCSV()">Export CSV</button>
             <button type="button" onclick="triggerImport()">Import CSV</button>
             <button type="button" onclick="downloadAll()">Download All</button>
-            <button type="button" onclick="handleSaveBudgetToServer()">Save to Server</button>
         </div>
         <!-- Hidden File Input -->
         <input id="csvFileInput" type="file" accept=".csv" style="display:none">
