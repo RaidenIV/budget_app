@@ -687,7 +687,7 @@ html[data-theme="light"] .nav-menu button.nav-item-btn {
     background-size: 20px 20px;
 
     /* move left from edge + vertically centered */
-    background-position: calc(100% - 24px) 50%;
+    background-position: calc(100% - 18px) 50%;
 }
 
 
@@ -714,5 +714,6 @@ button.danger:hover{
 .load-save-row button{
     margin: 0; /* override global button margin inside row */
 }
+
 
 
