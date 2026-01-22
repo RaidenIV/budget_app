@@ -118,10 +118,13 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
             onClick: legendOnClick,
             labels: {
               generateLabels: makeLegendGenerateLabels(),
+              color: "#ffffff",
             },
           },
           tooltip: {
             callbacks: { label: tooltipLabel },
+            bodyColor: "#ffffff",
+            titleColor: "#ffffff",
           },
         },
       },
@@ -185,7 +188,7 @@ export async function downloadChartsPNG(filename) {
 
   const ctx = out.getContext("2d");
 
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, outW, outH);
 
   let y = pad;
