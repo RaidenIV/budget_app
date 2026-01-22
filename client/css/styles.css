@@ -676,13 +676,20 @@ html[data-theme="light"] .nav-menu button.nav-item-btn {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+
+    /* enough space for the arrow */
     padding-right: 40px;
 
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
+
+    /* regular sized arrow */
     background-size: 12px 12px;
-    background-position: calc(100% - 22px) 100%;
+
+    /* move left from edge + vertically centered */
+    background-position: calc(100% - 24px) 50%;
 }
+
 
 
 /* Danger buttons (Save/Reset) */
@@ -707,3 +714,4 @@ button.danger:hover{
 .load-save-row button{
     margin: 0; /* override global button margin inside row */
 }
+
