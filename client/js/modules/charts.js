@@ -63,6 +63,7 @@ function makeLegendGenerateLabels() {
 
       return {
         text: `${label}: ${fmtUSD(v)} (${pct.toFixed(0)}%)`,
+        fontColor: CHART_TEXT, // <- EXPLICIT WHITE TEXT COLOR
         fillStyle,
         strokeStyle: fillStyle,
         lineWidth: 1,
@@ -113,8 +114,6 @@ function applyDarkModePluginOptions(chart) {
 
   if (plugins.legend?.labels) {
     plugins.legend.labels.color = CHART_TEXT;
-    // Legacy Chart.js v2 compatibility (some builds still read fontColor)
-    plugins.legend.labels.fontColor = CHART_TEXT;
     plugins.legend.labels.generateLabels = makeLegendGenerateLabels();
   }
 
@@ -148,7 +147,6 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
             labels: {
               generateLabels: makeLegendGenerateLabels(),
               color: CHART_TEXT,
-              fontColor: CHART_TEXT,
             },
           },
           tooltip: {
