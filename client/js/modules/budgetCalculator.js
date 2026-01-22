@@ -154,7 +154,16 @@ export function updateSummaryDisplay(data) {
 
     if (netProfitEl) {
       netProfitEl.textContent = `${data.netProfit >= 0 ? "+" : "-"}$${Math.abs(data.netProfit).toFixed(2)}`;
-      netProfitEl.style.color = data.netProfit < 0 ? "red" : "";
-    }
+      // Green when net profit is any positive number (e.g., $0.01 or $400.43)
+      const isPositive = Number.isFinite(data.netProfit) && data.netProfit > 0;
+
+      if (isPositive) {
+        netProfitEl.style.color = "var(--success)";
+      } else if (data.netProfit < 0) {
+        netProfitEl.style.color = "red";
+      } else {
+        netProfitEl.style.color = "";
+      }
+}
   }
 }
