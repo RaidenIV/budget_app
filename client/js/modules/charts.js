@@ -1,4 +1,4 @@
-// charts.js - Chart rendering and management
+// charts.js - Chart rendering and management (dark-mode friendly)
 
 import { state } from './state.js';
 import { loadImage } from './utils.js';
@@ -84,6 +84,15 @@ function tooltipLabel(ctx) {
 const EXP_COLORS = ["#FF6384", "#36A2EB", "#FFCE56", "#8BC34A", "#9C27B0", "#FF9800", "#607D8B"];
 const REV_COLORS = ["#4CAF50", "#03A9F4", "#FFC107", "#E91E63", "#9E9E9E"];
 
+// Dark-mode text colors for Chart.js UI (legend/tooltip/etc.)
+const CHART_TEXT = "#ffffff";
+
+// Set global defaults so most chart UI elements inherit readable text in dark mode.
+// Note: This only affects charts created AFTER this line runs.
+if (typeof Chart !== "undefined" && Chart?.defaults) {
+  Chart.defaults.color = CHART_TEXT;
+}
+
 function buildEntries(mapObj) {
   const entries = Object.entries(mapObj || {})
     .map(([k, v]) => [k, toNum(v)])
@@ -96,6 +105,24 @@ function buildEntries(mapObj) {
   };
 }
 
+function applyDarkModePluginOptions(chart) {
+  // Ensure changes apply BOTH on creation and on subsequent updates.
+  if (!chart?.options?.plugins) return;
+
+  const plugins = chart.options.plugins;
+
+  if (plugins.legend?.labels) {
+    plugins.legend.labels.color = CHART_TEXT;
+    plugins.legend.labels.generateLabels = makeLegendGenerateLabels();
+  }
+
+  if (plugins.tooltip) {
+    plugins.tooltip.bodyColor = CHART_TEXT;
+    plugins.tooltip.titleColor = CHART_TEXT;
+    plugins.tooltip.callbacks = { label: tooltipLabel };
+  }
+}
+
 function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return existingChart;
@@ -103,7 +130,7 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
   const colors = cycleColors(baseColors, values.length);
 
   if (!existingChart) {
-    return new Chart(canvas.getContext("2d"), {
+    const chart = new Chart(canvas.getContext("2d"), {
       type: "pie",
       data: {
         labels,
@@ -118,22 +145,31 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
             onClick: legendOnClick,
             labels: {
               generateLabels: makeLegendGenerateLabels(),
-              color: "#ffffff",
+              color: CHART_TEXT,
             },
           },
           tooltip: {
             callbacks: { label: tooltipLabel },
-            bodyColor: "#ffffff",
-            titleColor: "#ffffff",
+            bodyColor: CHART_TEXT,
+            titleColor: CHART_TEXT,
           },
         },
       },
     });
+
+    // Redundant but intentional: ensures consistent behavior across Chart.js versions
+    // and any runtime theme changes.
+    applyDarkModePluginOptions(chart);
+    return chart;
   }
 
   existingChart.data.labels = labels;
   existingChart.data.datasets[0].data = values;
   existingChart.data.datasets[0].backgroundColor = colors;
+
+  // IMPORTANT: apply dark-mode options even when reusing an existing chart,
+  // otherwise changes only take effect on first creation.
+  applyDarkModePluginOptions(existingChart);
 
   if (typeof existingChart.setDataVisibility === "function") {
     for (let i = 0; i < labels.length; i++) existingChart.setDataVisibility(i, true);
