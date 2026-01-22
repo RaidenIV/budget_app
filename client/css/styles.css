@@ -683,3 +683,27 @@ html[data-theme="light"] .nav-menu button.nav-item-btn {
     background-size: 12px 12px;
     background-position: calc(100% - 22px) 100%;
 }
+
+
+/* Danger buttons (Save/Reset) */
+button.danger{
+    background: #d13b3b;
+    color: #ffffff;
+    border: none;
+}
+button.danger:hover{
+    background: #b83232;
+}
+
+
+/* Load/Save Budget button row */
+.load-save-row{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+.load-save-row button{
+    margin: 0; /* override global button margin inside row */
+}
