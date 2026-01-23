@@ -580,76 +580,75 @@ button.primary:hover {
 /* ----------------------------------------------------------
    NAVIGATION MENU
 ---------------------------------------------------------- */
- .nav-dropdown {
-     position: fixed;
-     top: 18px;
-     left: 18px;
-     z-index: 10000;
- }
+.nav-dropdown {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 10000;
+}
 
- .nav-toggle {
-     background: rgba(26, 26, 26, 0.9);
-     border: 1px solid rgba(255, 255, 255, 0.2);
-     border-radius: 12px;
-     height: var(--top-ui-height);
-     padding: 0 16px;
-     color: #ffffff;
-     font-size: 16px;
-     font-weight: 600;
-     cursor: pointer;
-     display: flex;
-     align-items: center;
-     gap: 0;
-     transition: all 0.3s ease;
-     backdrop-filter: blur(10px);
-     -webkit-backdrop-filter: blur(10px);
-     font-family: 'Rajdhani', sans-serif;
- }
+.nav-toggle {
+  background: rgba(26, 26, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  height: var(--top-ui-height);
+  padding: 0 16px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: 'Rajdhani', sans-serif;
+}
 
 html[data-theme="light"] .nav-toggle {
-    background: rgba(245, 245, 245, 0.92);
-    border: 1px solid rgba(0, 0, 0, 0.18);
-    color: rgba(0,0,0,0.88);
+  background: rgba(245, 245, 245, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  color: rgba(0,0,0,0.88);
 }
 
 .nav-toggle:hover {
-    background: rgba(36, 36, 36, 0.9);
-    border-color: var(--accent);
+  background: rgba(36, 36, 36, 0.9);
+  border-color: var(--accent);
 }
 
 html[data-theme="light"] .nav-toggle:hover {
-    background: rgba(235, 235, 235, 0.95);
-    border-color: var(--accent);
+  background: rgba(235, 235, 235, 0.95);
+  border-color: var(--accent);
 }
 
 .nav-menu {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    background: rgba(26, 26, 26, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 8px;
-    min-width: 180px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    overflow: hidden;
+  position: absolute;
+  top: 60px;
+  left: 0;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
 html[data-theme="light"] .nav-menu {
-    background: rgba(245, 245, 245, 0.96);
-    border: 1px solid rgba(0, 0, 0, 0.16);
+  background: rgba(245, 245, 245, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.16);
 }
 
 .nav-dropdown.active .nav-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .nav-menu a,
@@ -671,13 +670,13 @@ html[data-theme="light"] .nav-menu {
 
 html[data-theme="light"] .nav-menu a,
 html[data-theme="light"] .nav-menu button.nav-item-btn {
-    color: rgba(0,0,0,0.75);
+  color: rgba(0,0,0,0.75);
 }
 
 .nav-menu a:hover,
 .nav-menu button.nav-item-btn:hover {
-    background: rgba(0, 153, 255, 0.12);
-    color: var(--accent);
+  background: rgba(0, 153, 255, 0.12);
+  color: var(--accent);
 }
 
 
@@ -770,5 +769,6 @@ button.danger:hover{
 .main-container > * > :last-child {
     margin-bottom: 0 !important;
 }
+
 
 
