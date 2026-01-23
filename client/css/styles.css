@@ -628,7 +628,7 @@ html[data-theme="light"] .nav-toggle:hover {
   position: absolute;
   top: 100%;         /* anchor under the toggle button */
   left: 0;           /* align with button's left edge */
-  margin-top: 60px;  /* 60px lower than the button */
+  margin-top: 12px;  /* 60px lower than the button */
   background: rgba(26, 26, 26, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
@@ -768,3 +768,4 @@ button.danger:hover{
 .main-container > * > :last-child {
     margin-bottom: 0 !important;
 }
+
