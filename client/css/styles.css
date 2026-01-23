@@ -580,34 +580,31 @@ button.primary:hover {
 /* ----------------------------------------------------------
    NAVIGATION MENU
 ---------------------------------------------------------- */
-.nav-dropdown {
-    position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 10000;
-}
+ .nav-dropdown {
+     position: fixed;
+     top: 18px;
+     left: 18px;
+     z-index: 10000;
+ }
 
-.nav-toggle {
-    position: relative;
-    z-index: 10002;
-    pointer-events: auto;
-    background: rgba(26, 26, 26, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    height: 48px;
-    padding: 0 16px;
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Rajdhani', sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
+ .nav-toggle {
+     background: rgba(26, 26, 26, 0.9);
+     border: 1px solid rgba(255, 255, 255, 0.2);
+     border-radius: 12px;
+     height: var(--top-ui-height);
+     padding: 0 16px;
+     color: #ffffff;
+     font-size: 16px;
+     font-weight: 600;
+     cursor: pointer;
+     display: flex;
+     align-items: center;
+     gap: 0;
+     transition: all 0.3s ease;
+     backdrop-filter: blur(10px);
+     -webkit-backdrop-filter: blur(10px);
+     font-family: 'Rajdhani', sans-serif;
+ }
 
 html[data-theme="light"] .nav-toggle {
     background: rgba(245, 245, 245, 0.92);
@@ -775,3 +772,4 @@ button.danger:hover{
 .main-container > * > :last-child {
     margin-bottom: 0 !important;
 }
+
