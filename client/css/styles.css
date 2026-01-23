@@ -72,7 +72,7 @@ h2 {
 /* sticky, but aligned with the other columns */
 .chart-panel {
     position: sticky;
-    top: 0;          /* align to same top as other panels */
+    top: 60px;          /* align to same top as other panels */
     align-self: start;
     margin-top: 0;
 }
@@ -717,6 +717,7 @@ button.danger:hover{
 .load-save-row button{
     margin: 0; /* override global button margin inside row */
 }
+
 
 
 
