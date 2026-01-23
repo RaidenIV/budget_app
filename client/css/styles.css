@@ -13,10 +13,10 @@
     --input-bg: #0f0f12;
     --button-bg: #1b1b20;
     --button-hover: #22222a;
-    
-    /* CONSISTENT SPACING VARIABLES */
-    --card-gap: 20px;  /* Standard gap between all cards */
+    --card-gap: 20px;
+    --top-ui-height: 48px;
 }
+
 
 /* ----------------------------------------------------------
    GLOBAL PAGE STYLE
