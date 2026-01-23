@@ -55,29 +55,23 @@ h2 {
 /* ----------------------------------------------------------
    LAYOUT STRUCTURE (3 equal columns)
 ---------------------------------------------------------- */
-.main-container{
+.main-container {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 30px;
-
-    /* keep items aligned to the same top edge */
     align-items: start;
 }
 
-/* Ensure none of the panels introduce a top offset */
 .preview-panel,
 .form-panel,
-.chart-panel{
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+.chart-panel {
+    min-width: 0;
 }
 
-/* Sticky, but starts at the SAME top edge as the other columns */
-.chart-panel{
+.chart-panel {
     position: sticky;
-    top: 0;              /* was 60px */
+    top: 20px;
     align-self: start;
-    margin-top: 0;
 }
 
 /* ----------------------------------------------------------
@@ -721,11 +715,39 @@ button.danger:hover{
     margin: 0; /* override global button margin inside row */
 }
 
+/* ----------------------------------------------------------
+   HARD ALIGN: force all 3 columns to start at the exact same top edge
+   (Place at end of file to win the cascade)
+---------------------------------------------------------- */
+.main-container { 
+    align-items: start;
+}
 
+/* Ensure the actual grid children start at the same top edge */
+.main-container > *{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    align-self: start;
+}
 
+/* Remove default top margin from the first visible element in each column */
+.main-container > * > :first-child{
+    margin-top: 0 !important;
+}
+.main-container > * > * > :first-child{
+    margin-top: 0 !important;
+}
 
+/* Common offenders that create a “mystery gap” */
+.main-container h1,
+.main-container h2,
+.main-container h3,
+.main-container p{
+    margin-top: 0 !important;
+}
 
-
-
-
-
+/* Sticky column: do not introduce a vertical offset */
+.chart-panel{
+    top: 0 !important;
+    margin-top: 0 !important;
+}
