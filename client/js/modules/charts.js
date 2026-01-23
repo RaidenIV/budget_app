@@ -135,7 +135,12 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
       type: "pie",
       data: {
         labels,
-        datasets: [{ data: values, backgroundColor: colors }],
+        datasets: [{ 
+          data: values, 
+          backgroundColor: colors,
+          borderColor: 'transparent',
+          borderWidth: 2
+        }],
       },
       options: {
         responsive: true,
@@ -167,6 +172,8 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
   existingChart.data.labels = labels;
   existingChart.data.datasets[0].data = values;
   existingChart.data.datasets[0].backgroundColor = colors;
+  existingChart.data.datasets[0].borderColor = 'transparent';
+  existingChart.data.datasets[0].borderWidth = 2;
 
   // IMPORTANT: apply dark-mode options even when reusing an existing chart,
   // otherwise changes only take effect on first creation.
