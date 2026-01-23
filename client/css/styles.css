@@ -13,7 +13,9 @@
     --input-bg: #0f0f12;
     --button-bg: #1b1b20;
     --button-hover: #22222a;
-    --top-ui-height: 48px;
+    
+    /* CONSISTENT SPACING VARIABLES */
+    --card-gap: 20px;  /* Standard gap between all cards */
 }
 
 /* ----------------------------------------------------------
@@ -41,7 +43,7 @@ html, body {
 h1 {
     text-align: center;
     font-size: 32px;
-    margin: 0 0 20px 0;
+    margin: 0 0 var(--card-gap) 0;
     font-weight: 700;
     color: var(--text);
 }
@@ -49,7 +51,7 @@ h1 {
 h2 {
     font-size: 24px;
     text-align: center;
-    margin-bottom: 20px;
+    margin: 0 0 var(--card-gap) 0;
     color: var(--text);
 }
 
@@ -59,8 +61,15 @@ h2 {
 .main-container {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 30px;
+    gap: 20px;
     align-items: start;
+}
+
+/* Force all direct children to align at top */
+.main-container > * {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    align-self: start;
 }
 
 .preview-panel,
@@ -71,7 +80,7 @@ h2 {
 
 .chart-panel {
     position: sticky;
-    top: 20px;
+    top: 0;
     align-self: start;
 }
 
@@ -118,6 +127,7 @@ form {
     border-radius: 14px;
     border: 1px solid var(--line);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    margin-bottom: var(--card-gap);
 }
 
 label {
@@ -184,7 +194,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .collapsible {
     border: 1px solid var(--line);
     border-radius: 10px;
-    margin-top: 14px;
+    margin-bottom: var(--card-gap);
     background: var(--panel);
 }
 
@@ -207,7 +217,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .collapsible .arrow {
     transition: transform 0.25s ease;
-    color: var(--accent);
+    color: #ffffff;
 }
 
 .collapsible.open .arrow {
@@ -224,7 +234,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ----------------------------------------------------------
-   HEADLINER CARDS
+   HEADLINER CARDS - CONSISTENT SPACING
 ---------------------------------------------------------- */
 .headliner-card {
     background: var(--input-bg);
@@ -232,7 +242,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border: 1px solid var(--line);
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    margin-bottom: 12px;
+    margin-bottom: var(--card-gap);
 }
 
 .headliner-card h3 {
@@ -243,10 +253,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ----------------------------------------------------------
-   CHARTS STYLING
+   CHARTS STYLING - CONSISTENT SPACING
 ---------------------------------------------------------- */
 .charts-section {
     width: 100%;
+    background: var(--panel);
+    padding: 22px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .charts-title {
@@ -254,7 +269,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     text-align: center;
     font-weight: 800;
     font-size: 20px;
-    margin: 0 0 10px 0;
+    margin: 0 0 20px 0;
     color: var(--text);
 }
 
@@ -263,15 +278,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
 }
 
 .chart-card {
     width: 100%;
-    border-radius: 14px;
-    padding: 14px;
-    background: var(--panel);
-    border: 1px solid var(--line);
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .chart-subtitle {
@@ -302,7 +317,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ----------------------------------------------------------
-   SUMMARY BOX
+   SUMMARY BOX - CONSISTENT SPACING
 ---------------------------------------------------------- */
 #summary {
     background: var(--panel);
@@ -310,8 +325,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 14px;
     border: 1px solid var(--line);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: var(--card-gap);
     text-align: center;
     font-weight: bold;
 }
@@ -331,13 +345,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ----------------------------------------------------------
-   SERVER LOAD SECTION
+   SERVER LOAD SECTION - CONSISTENT SPACING
 ---------------------------------------------------------- */
 .server-load-section {
     background: var(--panel);
     padding: 20px;
     border-radius: 14px;
-    margin: 20px 0;
+    margin-bottom: var(--card-gap);
     border: 1px solid var(--line);
 }
 
@@ -516,10 +530,10 @@ button.primary:hover {
 }
 
 /* ----------------------------------------------------------
-   OTHER CATEGORY WRAPPER
+   OTHER CATEGORY WRAPPER - CONSISTENT SPACING
 ---------------------------------------------------------- */
 .other-category-wrapper {
-    margin-bottom: 20px;
+    margin-bottom: var(--card-gap);
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -563,114 +577,110 @@ button.primary:hover {
     background: rgba(0, 153, 255, 0.3);
     color: var(--text);
 }
+
 /* ----------------------------------------------------------
    NAVIGATION MENU
 ---------------------------------------------------------- */
 .nav-dropdown {
-    position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 10000;
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 10000;
 }
 
 .nav-toggle {
-    position: relative;
-    z-index: 10002;
-    pointer-events: auto;
-    background: rgba(26, 26, 26, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    height: var(--top-ui-height);
-    padding: 0 16px;
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Rajdhani', sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+  background: rgba(26, 26, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  height: var(--top-ui-height);
+  padding: 0 16px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: 'Rajdhani', sans-serif;
 }
 
 html[data-theme="light"] .nav-toggle {
-    background: rgba(245, 245, 245, 0.92);
-    border: 1px solid rgba(0, 0, 0, 0.18);
-    color: rgba(0,0,0,0.88);
+  background: rgba(245, 245, 245, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  color: rgba(0,0,0,0.88);
 }
 
 .nav-toggle:hover {
-    background: rgba(36, 36, 36, 0.9);
-    border-color: var(--accent);
+  background: rgba(36, 36, 36, 0.9);
+  border-color: var(--accent);
 }
 
 html[data-theme="light"] .nav-toggle:hover {
-    background: rgba(235, 235, 235, 0.95);
-    border-color: var(--accent);
+  background: rgba(235, 235, 235, 0.95);
+  border-color: var(--accent);
 }
 
+/* UPDATED: dropdown aligned with button + 60px lower */
 .nav-menu {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    background: rgba(26, 26, 26, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 8px;
-    min-width: 180px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    overflow: hidden;
+  position: absolute;
+  top: 100%;         /* anchor under the toggle button */
+  left: 0;           /* align with button's left edge */
+  margin-top: 60px;  /* 60px lower than the button */
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
 html[data-theme="light"] .nav-menu {
-    background: rgba(245, 245, 245, 0.96);
-    border: 1px solid rgba(0, 0, 0, 0.16);
+  background: rgba(245, 245, 245, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.16);
 }
 
 .nav-dropdown.active .nav-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .nav-menu a,
 .nav-menu button.nav-item-btn {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 12px 16px;
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    font-family: 'Rajdhani', sans-serif;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    box-sizing: border-box;
+  display: block;
+  text-align: left;
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'Rajdhani', sans-serif;
 }
 
 html[data-theme="light"] .nav-menu a,
 html[data-theme="light"] .nav-menu button.nav-item-btn {
-    color: rgba(0,0,0,0.75);
+  color: rgba(0,0,0,0.75);
 }
 
 .nav-menu a:hover,
 .nav-menu button.nav-item-btn:hover {
-    background: rgba(0, 153, 255, 0.12);
-    color: var(--accent);
+  background: rgba(0, 153, 255, 0.12);
+  color: var(--accent);
 }
-
 
 /* Budget selector arrow positioning */
 #budgetSelector{
@@ -691,8 +701,6 @@ html[data-theme="light"] .nav-menu button.nav-item-btn {
     background-position: calc(100% - 14px) 50%;
 }
 
-
-
 /* Danger buttons (Save/Reset) */
 button.danger{
     background: #d13b3b;
@@ -702,7 +710,6 @@ button.danger{
 button.danger:hover{
     background: #b83232;
 }
-
 
 /* Load/Save Budget button row */
 .load-save-row{
@@ -717,38 +724,47 @@ button.danger:hover{
 }
 
 /* ----------------------------------------------------------
-   HARD ALIGN: force all 3 columns to start at the exact same top edge
-   (Place at end of file to win the cascade)
+   COLUMN ALIGNMENT & SPACING FIXES
+   (Must be at end to override earlier rules)
 ---------------------------------------------------------- */
-.main-container { 
+
+/* Force perfect top alignment for all columns */
+.main-container {
     align-items: start;
 }
 
-/* Ensure the actual grid children start at the same top edge */
-.main-container > *{
+/* Remove all top margins/padding from grid children */
+.main-container > * {
     margin-top: 0 !important;
     padding-top: 0 !important;
     align-self: start;
 }
 
-/* Remove default top margin from the first visible element in each column */
-.main-container > * > :first-child{
-    margin-top: 0 !important;
-}
-.main-container > * > * > :first-child{
+/* Remove top margin from first child in each column */
+.main-container > * > :first-child {
     margin-top: 0 !important;
 }
 
-/* Common offenders that create a “mystery gap” */
-.main-container h1,
-.main-container h2,
-.main-container h3,
-.main-container p{
+/* Remove top margin from nested first children */
+.main-container > * > * > :first-child {
     margin-top: 0 !important;
 }
 
-/* Sticky column: do not introduce a vertical offset */
-.chart-panel{
+/* Neutralize headings that might create gaps */
+.main-container h1:first-child,
+.main-container h2:first-child,
+.main-container h3:first-child,
+.main-container p:first-child {
+    margin-top: 0 !important;
+}
+
+/* Ensure sticky chart panel doesn't offset */
+.chart-panel {
     top: 0 !important;
     margin-top: 0 !important;
+}
+
+/* Remove bottom margin from last card in each column to prevent extra space */
+.main-container > * > :last-child {
+    margin-bottom: 0 !important;
 }
