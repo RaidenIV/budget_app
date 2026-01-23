@@ -55,24 +55,27 @@ h2 {
 /* ----------------------------------------------------------
    LAYOUT STRUCTURE (3 equal columns)
 ---------------------------------------------------------- */
-.main-container {
+.main-container{
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 30px;
+
+    /* keep items aligned to the same top edge */
     align-items: start;
 }
 
+/* Ensure none of the panels introduce a top offset */
 .preview-panel,
 .form-panel,
-.chart-panel {
-    min-width: 0;
-    margin-top: 0; /* prevents one column from starting lower */
+.chart-panel{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
-/* sticky, but aligned with the other columns */
-.chart-panel {
+/* Sticky, but starts at the SAME top edge as the other columns */
+.chart-panel{
     position: sticky;
-    top: 60px;          /* align to same top as other panels */
+    top: 0;              /* was 60px */
     align-self: start;
     margin-top: 0;
 }
@@ -717,6 +720,7 @@ button.danger:hover{
 .load-save-row button{
     margin: 0; /* override global button margin inside row */
 }
+
 
 
 
