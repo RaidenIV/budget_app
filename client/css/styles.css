@@ -38,40 +38,6 @@ html, body {
 }
 
 /* ----------------------------------------------------------
-   NEW: PAGE HEADER (LOGO + TITLE + SUBTITLE)
----------------------------------------------------------- */
-.page-header{
-    text-align: center;
-    margin: 0 0 var(--card-gap) 0;
-}
-
-.page-logo{
-    display: block;
-    margin: 0 auto 10px auto;
-    height: 56px;
-    width: auto;
-    object-fit: contain;
-}
-
-.page-header h1{
-    margin: 0;
-}
-
-.page-subtitle{
-    margin: 8px 0 0 0;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--muted);
-}
-
-/* Slightly smaller logo on narrow screens */
-@media (max-width: 600px){
-    .page-logo{
-        height: 46px;
-    }
-}
-
-/* ----------------------------------------------------------
    HEADINGS
 ---------------------------------------------------------- */
 h1 {
@@ -662,7 +628,7 @@ html[data-theme="light"] .nav-toggle:hover {
   position: absolute;
   top: 100%;         /* anchor under the toggle button */
   left: 0;           /* align with button's left edge */
-  margin-top: 60px;  /* 60px lower than the button */
+  margin-top: 12px;  /* 60px lower than the button */
   background: rgba(26, 26, 26, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
