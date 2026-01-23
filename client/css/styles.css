@@ -217,7 +217,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .collapsible .arrow {
     transition: transform 0.25s ease;
-    color: var(--accent);
+    color: #ffffff;
 }
 
 .collapsible.open .arrow {
@@ -283,10 +283,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .chart-card {
     width: 100%;
-    border-radius: 10px;
-    padding: 14px;
-    background: var(--input-bg);
-    border: 1px solid var(--line);
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .chart-subtitle {
