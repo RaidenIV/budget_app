@@ -11,8 +11,8 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Styles (UPDATED FILE NAME) -->
-<link rel="stylesheet" href="css/styles_budget_tracker_v2.css">
+<!-- Styles -->
+<link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
@@ -31,19 +31,7 @@
 </div>
 
 <div class="page-wrapper">
-
-    <!-- NEW: Logo + Title + Subtitle header block -->
-    <header class="page-header">
-        <img
-            class="page-logo"
-            src="https://images.squarespace-cdn.com/content/v1/681ea18dd168a935c26295bd/c311da3d-6fbf-446a-858c-227fa011e7e3/Xodia+MEDIA+Group+%28TRANS%29+%281%29+%281%29.png?format=750w"
-            alt="XODIA Media Group Logo"
-            loading="eager"
-            decoding="async"
-        />
-        <h1>Event Budget Tracker</h1>
-        <div class="page-subtitle">Tracks and visualizes expenses and sales for in depth analysis</div>
-    </header>
+    <h1>Event Budget Tracker</h1>
 
     <div class="main-container">
 
@@ -70,9 +58,9 @@
             </select>
             
             <div class="load-save-row">
-                <button type="button" onclick="handleLoadSelectedBudget()">Load Budget</button>
-                <button type="button" class="danger" onclick="handleSaveBudgetToServer()">Save</button>
-            </div>
+  <button type="button" onclick="handleLoadSelectedBudget()">Load Budget</button>
+  <button type="button" class="danger" onclick="handleSaveBudgetToServer()">Save</button>
+</div>
             
             <span id="loadStatus" class="load-status"></span>
         </div>
@@ -134,6 +122,7 @@
             </div>
         </div>
 
+
         <!-- -------------------------
             COLLAPSIBLE: PRODUCTION
         -------------------------- -->
@@ -154,6 +143,7 @@
             <input id="lasers" type="number" step="0.01" oninput="updateBudget()">
             </div>
         </div>
+
 
         <!-- -------------------------
             COLLAPSIBLE: GEAR
@@ -214,6 +204,7 @@
             <input id="eventbriteAds" type="number" step="0.01" oninput="updateBudget()">
           </div>
         </div>
+
 
         <!-- -------------------------
             COLLAPSIBLE: STAFF
@@ -286,12 +277,12 @@
             CONTROLS
         -------------------------- -->
         <div class="controls">
+            
             <button type="button" class="danger" onclick="resetForm()">Reset</button>
             <button type="button" onclick="downloadCSV()">Export CSV</button>
             <button type="button" onclick="triggerImport()">Import CSV</button>
             <button type="button" onclick="downloadAll()">Download All</button>
         </div>
-
         <!-- Hidden File Input -->
         <input id="csvFileInput" type="file" accept=".csv" style="display:none">
         </form>
@@ -327,6 +318,7 @@
     </div>
 </div>
 
+
 <!-- Navigation Menu Script -->
 <script>
 // Navigation toggle functionality
@@ -358,7 +350,6 @@ window.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-
 <!-- Load Modules (order matters!) -->
 <script type="module" src="js/modules/state.js"></script>
 <script type="module" src="js/modules/utils.js"></script>
