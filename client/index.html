@@ -114,8 +114,14 @@
             <!-- Direct Support Card -->
             <div class="support-card">
                 <h3>Direct Support</h3>
+                <label>Name:</label>
+                <input id="directSupportName" type="text" oninput="updateBudget()">
                 <label>Fee:</label>
                 <input id="directSupport" type="number" step="0.01" oninput="updateBudget()">
+                <label>Hotel:</label>
+                <input id="directSupportHotel" type="number" step="0.01" oninput="updateBudget()">
+                <label>Rider:</label>
+                <input id="directSupportRider" type="number" step="0.01" oninput="updateBudget()">
             </div>
             
             <div class="quantity-row">
