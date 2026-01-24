@@ -1,186 +1,156 @@
 const express = require('express');
-const cors = require('cors');
-const { MongoClient, ObjectId } = require('mongodb');
+const fs = require('fs').promises;
 const path = require('path');
+const cors = require('cors');
 
 const app = express();
 
-// IMPORTANT: Serve static files BEFORE other middleware
-app.use(express.static(path.join(__dirname, '..', 'client')));
-
-app.use(cors({
-  origin: '*',
-  credentials: true
-}));
-
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, '..')));
 
-// MongoDB connection
-let db;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/budgets';
+const BUDGETS_DIR = path.join(__dirname, 'budgets');
+fs.mkdir(BUDGETS_DIR, { recursive: true });
 
-console.log('🔍 Checking MongoDB URI...');
-console.log('MONGODB_URI is set:', !!process.env.MONGODB_URI);
-if (!process.env.MONGODB_URI) {
-  console.warn('⚠️  WARNING: MONGODB_URI environment variable is not set! Using fallback.');
+// ---------- helpers ----------
+function sanitizeIdPart(str) {
+  return String(str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_-]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
 }
 
-async function connectDB() {
+function buildBudgetId(name, date) {
+  const n = sanitizeIdPart(name) || 'untitled';
+  const d = sanitizeIdPart(date) || 'nodate';
+  return `${n}__${d}`;
+}
+
+async function fileExists(p) {
   try {
-    console.log('🔌 Attempting to connect to MongoDB...');
-    const client = new MongoClient(MONGODB_URI);
-    await client.connect();
-    db = client.db();
-    console.log('✅ Connected to MongoDB successfully!');
+    await fs.access(p);
     return true;
-  } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:');
-    console.error('Error:', error.message);
-    if (error.code) console.error('Error code:', error.code);
+  } catch {
     return false;
   }
 }
 
-// API Routes - these must come AFTER static files
+// ---------- routes ----------
 
-// Health check
-app.get('/api', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Budget App Server is running',
-    storage: db ? 'MongoDB (Connected)' : 'MongoDB (Not Connected)',
-    mongoConfigured: !!process.env.MONGODB_URI
-  });
-});
-
-// GET all budgets
+// list budgets
 app.get('/api/budgets', async (req, res) => {
   try {
-    if (!db) {
-      return res.status(503).json({ error: 'Database not connected' });
-    }
-    const budgets = await db.collection('budgets')
-      .find({}, { projection: { csv: 0 } })
-      .toArray();
+    const files = await fs.readdir(BUDGETS_DIR);
+    const budgets = await Promise.all(
+      files
+        .filter(f => f.endsWith('.json'))
+        .map(async f => {
+          const content = await fs.readFile(path.join(BUDGETS_DIR, f), 'utf8');
+          return JSON.parse(content);
+        })
+    );
     res.json(budgets);
-  } catch (error) {
-    console.error('Error fetching budgets:', error);
+  } catch {
     res.status(500).json({ error: 'Failed to fetch budgets' });
   }
 });
 
-// GET specific budget (accept custom id OR Mongo _id)
+// load csv
 app.get('/api/budgets/:id', async (req, res) => {
   try {
-    if (!db) {
-      return res.status(503).json({ error: 'Database not connected' });
-    }
-
-    const param = req.params.id;
-
-    // 1) Try your custom "id" field first
-    let budget = await db.collection('budgets').findOne({ id: param });
-
-    // 2) If not found and it looks like an ObjectId, try Mongo _id
-    if (!budget && ObjectId.isValid(param)) {
-      budget = await db.collection('budgets').findOne({ _id: new ObjectId(param) });
-    }
-
-    if (!budget) {
-      return res.status(404).json({ error: 'Budget not found' });
-    }
-
-    res.type('text/csv').send(budget.csv);
-  } catch (error) {
-    console.error('Error fetching budget:', error);
-    res.status(500).json({ error: 'Failed to fetch budget' });
+    const csv = await fs.readFile(
+      path.join(BUDGETS_DIR, `${req.params.id}.csv`),
+      'utf8'
+    );
+    res.type('text/csv').send(csv);
+  } catch {
+    res.status(404).json({ error: 'Budget not found' });
   }
 });
 
-// POST new budget
+// save (UPSERT)
 app.post('/api/budgets', async (req, res) => {
   try {
-    if (!db) {
-      return res.status(503).json({ error: 'Database not connected' });
-    }
     const { csv, name, date } = req.body;
 
-    if (!csv || !name || !date) {
-      return res.status(400).json({ error: 'Missing required fields: csv, name, date' });
+    const safeName = name || 'Untitled Budget';
+    const safeDate = date || new Date().toISOString().split('T')[0];
+
+    const id = buildBudgetId(safeName, safeDate);
+
+    const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
+    const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
+
+    const now = new Date().toISOString();
+    let createdAt = now;
+
+    if (await fileExists(metaPath)) {
+      const existing = JSON.parse(await fs.readFile(metaPath, 'utf8'));
+      if (existing.createdAt) createdAt = existing.createdAt;
     }
 
-    const id = Date.now().toString();
-    const budget = {
+    await fs.writeFile(csvPath, csv, 'utf8');
+
+    const metadata = {
       id,
-      name,
-      date,
-      csv,
-      createdAt: new Date().toISOString()
+      name: safeName,
+      date: safeDate,
+      createdAt,
+      updatedAt: now
     };
 
-    await db.collection('budgets').insertOne(budget);
+    await fs.writeFile(metaPath, JSON.stringify(metadata, null, 2), 'utf8');
 
-    console.log(`✅ Budget saved: ${name} (${id})`);
-    res.json({ id, message: 'Budget saved successfully' });
-  } catch (error) {
-    console.error('❌ Save error:', error);
+    res.json({ id, message: 'Budget saved (overwritten if existing)' });
+  } catch {
     res.status(500).json({ error: 'Failed to save budget' });
   }
 });
 
-// DELETE budget (accept custom id OR Mongo _id)
+// delete
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
-    if (!db) {
-      return res.status(503).json({ error: 'Database not connected' });
-    }
-
-    const param = req.params.id;
-
-    // Prefer deleting by custom id; fallback to _id if needed
-    let result = await db.collection('budgets').deleteOne({ id: param });
-
-    if (result.deletedCount === 0 && ObjectId.isValid(param)) {
-      result = await db.collection('budgets').deleteOne({ _id: new ObjectId(param) });
-    }
-
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Budget not found' });
-    }
-
-    console.log(`🗑️  Budget deleted: ${param}`);
-    res.json({ message: 'Budget deleted successfully' });
-  } catch (error) {
-    console.error('❌ Delete error:', error);
+    await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.csv`));
+    await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.json`));
+    res.json({ message: 'Budget deleted' });
+  } catch {
     res.status(500).json({ error: 'Failed to delete budget' });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// search
+app.get('/api/budgets/search', async (req, res) => {
+  try {
+    const { name, dateFrom, dateTo } = req.query;
 
-// Start server
-async function startServer() {
-  console.log('🚀 Starting Budget App Server...');
+    const files = await fs.readdir(BUDGETS_DIR);
+    let budgets = await Promise.all(
+      files
+        .filter(f => f.endsWith('.json'))
+        .map(async f => {
+          const content = await fs.readFile(path.join(BUDGETS_DIR, f), 'utf8');
+          return JSON.parse(content);
+        })
+    );
 
-  // Try to connect to MongoDB
-  const dbConnected = await connectDB();
-
-  if (!dbConnected) {
-    console.warn('⚠️  Server starting WITHOUT database connection');
-    console.warn('⚠️  API endpoints will return 503 errors until DB is connected');
-  }
-
-  // Start server regardless of DB connection
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server running on port ${PORT}`);
-    console.log(`📡 Health check: http://localhost:${PORT}/api`);
-    console.log(`🌐 Frontend: http://localhost:${PORT}/`);
-    if (dbConnected) {
-      console.log('🗄️  MongoDB: Connected and ready');
-    } else {
-      console.log('❌ MongoDB: Not connected - check MONGODB_URI');
+    if (name) {
+      budgets = budgets.filter(b =>
+        b.name.toLowerCase().includes(name.toLowerCase())
+      );
     }
-  });
-}
+    if (dateFrom) budgets = budgets.filter(b => b.date >= dateFrom);
+    if (dateTo) budgets = budgets.filter(b => b.date <= dateTo);
 
-startServer();
+    res.json(budgets);
+  } catch {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
