@@ -34,7 +34,11 @@ function sanitizeIdPart(str) {
     .replace(/^_+|_+$/g, '');
 }
 
-function buildBudgetId(name, date) {
+/**
+ * Legacy deterministic ID (used only when client doesn't send budgetId).
+ * One file per (name + date).
+ */
+function buildBudgetIdFromNameDate(name, date) {
   const n = sanitizeIdPart(name) || 'untitled';
   const d = sanitizeIdPart(date) || 'nodate';
   return `${n}__${d}`;
@@ -97,7 +101,7 @@ app.get('/api/budgets/:id', async (req, res) => {
 // POST upsert budget (one file per budget)
 app.post('/api/budgets', async (req, res) => {
   try {
-    const { csv, name, date } = req.body;
+    const { csv, name, date, budgetId } = req.body;
 
     if (typeof csv !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid csv string' });
@@ -106,13 +110,20 @@ app.post('/api/budgets', async (req, res) => {
     const safeName = name || 'Untitled Budget';
     const safeDate = date || new Date().toISOString().split('T')[0];
 
-    const id = buildBudgetId(safeName, safeDate);
+    /**
+     * If the client provides budgetId, it ALWAYS wins.
+     * This is the core of "one file per budget" even if name/date change later.
+     *
+     * If not provided, we fall back to deterministic ID from name+date.
+     */
+    const id = (budgetId && sanitizeIdPart(budgetId)) || buildBudgetIdFromNameDate(safeName, safeDate);
 
     const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
     const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
 
     const nowIso = new Date().toISOString();
 
+    // Preserve createdAt if it already exists
     let createdAt = nowIso;
     if (await fileExists(metaPath)) {
       try {
@@ -123,8 +134,10 @@ app.post('/api/budgets', async (req, res) => {
       }
     }
 
+    // Write/overwrite CSV
     await fs.writeFile(csvPath, csv, 'utf8');
 
+    // Write/overwrite metadata
     const metadata = {
       id,
       name: safeName,
