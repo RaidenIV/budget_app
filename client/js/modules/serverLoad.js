@@ -1,5 +1,4 @@
 // client/js/modules/serverLoad.js - Load/Save CSV budgets from server
-
 import { loadCSV } from './csv.js';
 
 /**
@@ -28,26 +27,6 @@ function resolveApiBase() {
 
 const API_BASE = resolveApiBase();
 
-// Persistent active budget id
-const LS_BUDGET_ID = 'budget_app_active_budget_id';
-
-function getActiveBudgetId() {
-  try {
-    return localStorage.getItem(LS_BUDGET_ID) || '';
-  } catch {
-    return '';
-  }
-}
-
-function setActiveBudgetId(id) {
-  try {
-    if (id) localStorage.setItem(LS_BUDGET_ID, id);
-    else localStorage.removeItem(LS_BUDGET_ID);
-  } catch {
-    // ignore
-  }
-}
-
 export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetFn) {
   const statusEl = document.getElementById('loadStatus');
 
@@ -61,9 +40,6 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
 
     const csvText = await response.text();
     loadCSV(csvText, regenerators, updateBudgetFn);
-
-    // Mark this budget as active so subsequent saves overwrite it
-    setActiveBudgetId(budgetId);
 
     if (statusEl) {
       statusEl.textContent = 'Budget loaded successfully!';
@@ -125,20 +101,14 @@ export async function populateBudgetSelector(selectId) {
 
 export async function saveBudgetToServer(csvData, metadata = {}) {
   try {
-    const activeId = getActiveBudgetId();
-
+    // IMPORTANT: NO budgetId here — server will compute id from name+date.
     const payload = {
       csv: csvData,
       name: metadata.name || 'Untitled Budget',
       date: metadata.date || new Date().toISOString().split('T')[0]
     };
 
-    // Critical: include the persisted budgetId so server overwrites the same files
-    if (activeId) {
-      payload.budgetId = activeId;
-    }
-
-    // Allow extra metadata fields, but do not let them override csv/name/date/budgetId unintentionally
+    // Allow extra metadata fields, but do not let them override csv/name/date
     const { csv, name, date, budgetId, ...rest } = metadata;
     Object.assign(payload, rest);
 
@@ -154,14 +124,7 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
       throw new Error(`Failed to save budget: ${response.status} ${response.statusText}`);
     }
 
-    const result = await response.json();
-
-    // Persist returned id as the active budget id
-    if (result && result.id) {
-      setActiveBudgetId(result.id);
-    }
-
-    return result;
+    return await response.json();
   } catch (error) {
     console.error('Error saving budget to server:', error);
     throw error;
@@ -186,11 +149,5 @@ export async function deleteBudgetFromServer(budgetId) {
     console.error('deleteBudgetFromServer failed:', response.status, response.statusText, text);
     throw new Error(`Failed to delete budget: ${response.status} ${response.statusText}`);
   }
-
-  // If deleting the active budget, clear it
-  if (getActiveBudgetId() === budgetId) {
-    setActiveBudgetId('');
-  }
-
   return await response.json();
 }
