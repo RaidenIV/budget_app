@@ -31,8 +31,16 @@ export function updateTextPreview(data = {}) {
   }
   if (headlinerRows.length) sections.push({ title: "Headliners", rows: headlinerRows });
 
-  // SUPPORT
-  const supportRows = [{ label: "Direct Support:", value: getNum("directSupport") }];
+  // SUPPORT - UPDATED to include Direct Support name, fee, hotel, rider
+  const supportRows = [];
+  
+  // Direct Support with name, fee, hotel, rider
+  const directSupportName = getStr("directSupportName") || "Direct Support";
+  supportRows.push({ label: `${directSupportName} Fee:`, value: getNum("directSupport") });
+  supportRows.push({ label: `${directSupportName} Hotel:`, value: getNum("directSupportHotel") });
+  supportRows.push({ label: `${directSupportName} Rider:`, value: getNum("directSupportRider") });
+  
+  // Local DJs
   const nLocal = +document.getElementById("numLocalDJs")?.value || 0;
   for (let i = 1; i <= nLocal; i++) {
     const name = getStr(`localDJ_name_${i}`) || `Local DJ ${i}`;
@@ -231,4 +239,12 @@ export function exportTextPreviewTxt() {
   a.remove();
 
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+// Helper function for filename (referenced but not defined in original)
+function buildTxtFileName() {
+  const title = document.getElementById("showTitle")?.value || "budget";
+  const date = document.getElementById("showDate")?.value || new Date().toISOString().slice(0, 10);
+  const sanitize = (s) => String(s).replace(/[^a-z0-9_-]/gi, '_');
+  return `${sanitize(title)}_${sanitize(date)}.txt`;
 }
