@@ -1,3 +1,4 @@
+// server/server.js
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
@@ -9,24 +10,28 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 /**
- * FRONTEND DIRECTORY
- * Fixes "Cannot GET /" by serving your budget app HTML/CSS/JS.
- * Default assumes your frontend lives one folder ABOVE server.js.
+ * FRONTEND SERVING (matches your repo structure)
+ * Repo layout:
+ *   budget_app/
+ *     client/index.html
+ *     server/server.js
  *
- * Optional overrides:
- *   FRONTEND_DIR=/absolute/path/to/frontend INDEX_FILE=budget.html node server.js
+ * So from /server, the frontend is ../client
  */
-const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(__dirname, '..');
+const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(__dirname, '..', 'client');
 const INDEX_FILE = process.env.INDEX_FILE || 'index.html';
 
 app.use(express.static(FRONTEND_DIR));
 
+// Fixes GET / (prevents "Cannot GET /" / "Not found")
 app.get('/', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, INDEX_FILE));
 });
 
 const BUDGETS_DIR = path.join(__dirname, 'budgets');
-fs.mkdir(BUDGETS_DIR, { recursive: true });
+
+// Ensure budgets directory exists
+fs.mkdir(BUDGETS_DIR, { recursive: true }).catch(() => {});
 
 // ---------- helpers ----------
 function sanitizeIdPart(str) {
@@ -39,6 +44,11 @@ function sanitizeIdPart(str) {
     .replace(/^_+|_+$/g, '');
 }
 
+/**
+ * Stable ID per budget:
+ * One file per (name + date) combination.
+ * Save again with same name/date => overwrite same files.
+ */
 function buildBudgetId(name, date) {
   const n = sanitizeIdPart(name) || 'untitled';
   const d = sanitizeIdPart(date) || 'nodate';
@@ -56,7 +66,7 @@ async function fileExists(p) {
 
 // ---------- routes ----------
 
-// GET all budgets
+// GET all budgets (metadata list)
 app.get('/api/budgets', async (req, res) => {
   try {
     const files = await fs.readdir(BUDGETS_DIR);
@@ -74,7 +84,7 @@ app.get('/api/budgets', async (req, res) => {
   }
 });
 
-// GET specific budget (csv)
+// GET specific budget CSV by ID
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     const csv = await fs.readFile(
@@ -87,10 +97,14 @@ app.get('/api/budgets/:id', async (req, res) => {
   }
 });
 
-// POST upsert budget (one file per budget)
+// POST upsert budget (overwrite instead of creating a new file each time)
 app.post('/api/budgets', async (req, res) => {
   try {
     const { csv, name, date } = req.body;
+
+    if (typeof csv !== 'string') {
+      return res.status(400).json({ error: 'Missing or invalid csv string' });
+    }
 
     const safeName = name || 'Untitled Budget';
     const safeDate = date || new Date().toISOString().split('T')[0];
@@ -114,8 +128,10 @@ app.post('/api/budgets', async (req, res) => {
       }
     }
 
+    // Write/overwrite CSV
     await fs.writeFile(csvPath, csv, 'utf8');
 
+    // Write/overwrite metadata
     const metadata = {
       id,
       name: safeName,
@@ -132,7 +148,7 @@ app.post('/api/budgets', async (req, res) => {
   }
 });
 
-// DELETE budget
+// DELETE budget (csv + json)
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
     await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.csv`));
@@ -159,9 +175,8 @@ app.get('/api/budgets/search', async (req, res) => {
     );
 
     if (name) {
-      budgets = budgets.filter(b =>
-        (b.name || '').toLowerCase().includes(String(name).toLowerCase())
-      );
+      const q = String(name).toLowerCase();
+      budgets = budgets.filter(b => (b.name || '').toLowerCase().includes(q));
     }
 
     if (dateFrom) budgets = budgets.filter(b => b.date >= dateFrom);
