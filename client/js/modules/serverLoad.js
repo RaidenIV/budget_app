@@ -2,10 +2,13 @@
 
 import { loadCSV } from './csv.js';
 
-// Your server base URL (change as needed)
-// If you're running locally, use: 'http://localhost:3000'
-// If on LAN: 'http://192.168.1.xxx:3000'
-const API_BASE = 'http://localhost:3000';
+/**
+ * IMPORTANT:
+ * Use same-origin by default so it works on mobile/LAN.
+ * If you open the app at http://192.168.1.217:3000/,
+ * then API_BASE becomes http://192.168.1.217:3000 (correct).
+ */
+const API_BASE = window.location.origin;
 
 export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetFn) {
   const statusEl = document.getElementById('loadStatus');
@@ -14,9 +17,8 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
     if (statusEl) statusEl.textContent = 'Loading budget...';
 
     const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`);
-
     if (!response.ok) {
-      throw new Error(`Failed to load budget: ${response.statusText}`);
+      throw new Error(`Failed to load budget: ${response.status} ${response.statusText}`);
     }
 
     const csvText = await response.text();
@@ -34,9 +36,12 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
 }
 
 export async function fetchBudgetList() {
-  const response = await fetch(`${API_BASE}/api/budgets`);
+  const response = await fetch(`${API_BASE}/api/budgets`, { cache: 'no-store' });
   if (!response.ok) {
-    throw new Error(`Failed to fetch budget list: ${response.statusText}`);
+    // Log more detail to help diagnose
+    const text = await response.text().catch(() => '');
+    console.error('fetchBudgetList failed:', response.status, response.statusText, text);
+    throw new Error(`Failed to fetch budget list: ${response.status} ${response.statusText}`);
   }
   return await response.json();
 }
@@ -48,23 +53,21 @@ export async function populateBudgetSelector(selectId) {
   try {
     const budgets = await fetchBudgetList();
 
-    // Sort newest first (use updatedAt if present, else createdAt)
+    // Sort newest first (use updatedAt if present)
     budgets.sort((a, b) => {
       const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
       return tb - ta;
     });
 
-    // Clear options except the first placeholder option
-    while (select.options.length > 1) {
-      select.remove(1);
-    }
+    // Clear options except first placeholder
+    while (select.options.length > 1) select.remove(1);
 
     budgets.forEach(budget => {
       const option = document.createElement('option');
       option.value = budget.id;
 
-      const savedDate = new Date(budget.updatedAt || budget.createdAt);
+      const savedDate = new Date(budget.updatedAt || budget.createdAt || Date.now());
       const timeStr = savedDate.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -75,6 +78,7 @@ export async function populateBudgetSelector(selectId) {
       option.textContent = `${budget.name} - ${budget.date} (Saved: ${timeStr})`;
       select.appendChild(option);
     });
+
   } catch (error) {
     console.error('Error populating budget selector:', error);
     alert('Failed to load budget list from server');
@@ -89,7 +93,7 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
       date: metadata.date || new Date().toISOString().split('T')[0]
     };
 
-    // FIX: spread metadata safely (and avoid overriding csv/name/date unintentionally)
+    // Spread other metadata safely without overriding the main fields
     const { csv, name, date, ...rest } = metadata;
     Object.assign(payload, rest);
 
@@ -100,7 +104,9 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to save budget: ${response.statusText}`);
+      const text = await response.text().catch(() => '');
+      console.error('saveBudgetToServer failed:', response.status, response.statusText, text);
+      throw new Error(`Failed to save budget: ${response.status} ${response.statusText}`);
     }
 
     return await response.json();
@@ -112,19 +118,21 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
 
 export async function searchBudgets(criteria) {
   const params = new URLSearchParams(criteria);
-  const response = await fetch(`${API_BASE}/api/budgets/search?${params}`);
+  const response = await fetch(`${API_BASE}/api/budgets/search?${params}`, { cache: 'no-store' });
   if (!response.ok) {
-    throw new Error(`Search failed: ${response.statusText}`);
+    const text = await response.text().catch(() => '');
+    console.error('searchBudgets failed:', response.status, response.statusText, text);
+    throw new Error(`Search failed: ${response.status} ${response.statusText}`);
   }
   return await response.json();
 }
 
 export async function deleteBudgetFromServer(budgetId) {
-  const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`, {
-    method: 'DELETE'
-  });
+  const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`, { method: 'DELETE' });
   if (!response.ok) {
-    throw new Error(`Failed to delete budget: ${response.statusText}`);
+    const text = await response.text().catch(() => '');
+    console.error('deleteBudgetFromServer failed:', response.status, response.statusText, text);
+    throw new Error(`Failed to delete budget: ${response.status} ${response.statusText}`);
   }
   return await response.json();
 }
