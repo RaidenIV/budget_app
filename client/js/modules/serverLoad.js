@@ -1,14 +1,36 @@
-// client/serverLoad.js - Load/Save CSV budgets from server
+// client/js/modules/serverLoad.js - Load/Save CSV budgets from server
 
 import { loadCSV } from './csv.js';
 
 /**
- * IMPORTANT:
- * Use same-origin by default so it works on mobile/LAN.
- * If you open the app at http://192.168.1.217:3000/,
- * then API_BASE becomes http://192.168.1.217:3000 (correct).
+ * API base resolution:
+ * - If the frontend is served by Express (recommended): use same-origin
+ * - If frontend is opened via file:// or served on a different port (8000):
+ *   call the backend on port 3000 on the same host (or localhost)
  */
-const API_BASE = window.location.origin;
+function resolveApiBase() {
+  try {
+    const { protocol, hostname, port, origin } = window.location;
+
+    // If opened as a local file, origin is "null" and fetch will fail.
+    if (protocol === 'file:' || origin === 'null') {
+      return 'http://localhost:3000';
+    }
+
+    // If you're serving the frontend separately (e.g., :8000), assume backend is :3000.
+    // Works for localhost and LAN hosts (192.168.x.x) alike.
+    if (port && port !== '3000') {
+      return `http://${hostname}:3000`;
+    }
+
+    // Otherwise, same-origin (works when Express serves /client)
+    return origin;
+  } catch {
+    return 'http://localhost:3000';
+  }
+}
+
+const API_BASE = resolveApiBase();
 
 export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetFn) {
   const statusEl = document.getElementById('loadStatus');
@@ -16,8 +38,10 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
   try {
     if (statusEl) statusEl.textContent = 'Loading budget...';
 
-    const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`);
+    const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`, { cache: 'no-store' });
     if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      console.error('loadBudgetFromServer failed:', response.status, response.statusText, text);
       throw new Error(`Failed to load budget: ${response.status} ${response.statusText}`);
     }
 
@@ -37,12 +61,13 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
 
 export async function fetchBudgetList() {
   const response = await fetch(`${API_BASE}/api/budgets`, { cache: 'no-store' });
+
   if (!response.ok) {
-    // Log more detail to help diagnose
     const text = await response.text().catch(() => '');
     console.error('fetchBudgetList failed:', response.status, response.statusText, text);
     throw new Error(`Failed to fetch budget list: ${response.status} ${response.statusText}`);
   }
+
   return await response.json();
 }
 
@@ -60,7 +85,6 @@ export async function populateBudgetSelector(selectId) {
       return tb - ta;
     });
 
-    // Clear options except first placeholder
     while (select.options.length > 1) select.remove(1);
 
     budgets.forEach(budget => {
@@ -119,20 +143,26 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
 export async function searchBudgets(criteria) {
   const params = new URLSearchParams(criteria);
   const response = await fetch(`${API_BASE}/api/budgets/search?${params}`, { cache: 'no-store' });
+
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     console.error('searchBudgets failed:', response.status, response.statusText, text);
     throw new Error(`Search failed: ${response.status} ${response.statusText}`);
   }
+
   return await response.json();
 }
 
 export async function deleteBudgetFromServer(budgetId) {
-  const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`, { method: 'DELETE' });
+  const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`, {
+    method: 'DELETE'
+  });
+
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     console.error('deleteBudgetFromServer failed:', response.status, response.statusText, text);
     throw new Error(`Failed to delete budget: ${response.status} ${response.statusText}`);
   }
+
   return await response.json();
 }
