@@ -1,68 +1,48 @@
-// client/js/modules/serverLoad.js - Load/Save budgets from server
+// client/js/modules/serverLoad.js - Load/Save CSV budgets from server
 
 import { loadCSV } from './csv.js';
 
 /**
- * API base:
- * Works for LAN/mobile and when served by Express.
+ * Resolve backend base URL:
+ * - If frontend is served by backend (port 3000): same origin
+ * - If frontend is served separately (port != 3000): use same host with :3000
+ * - If opened via file://: use localhost:3000
  */
-const API_BASE = window.location.origin;
+function resolveApiBase() {
+  try {
+    const { protocol, hostname, port, origin } = window.location;
 
-/**
- * Persistent "current budget" tracking.
- * This is what guarantees "one file per budget".
- */
-const LS_ACTIVE_ID = 'xmg_budget_active_id';
-const LS_ACTIVE_KEY = 'xmg_budget_active_key'; // name|date at last save/load
+    if (protocol === 'file:' || origin === 'null') {
+      return 'http://localhost:3000';
+    }
 
-function makeKey(name, date) {
-  const n = String(name || '').trim();
-  const d = String(date || '').trim();
-  return `${n}||${d}`;
+    if (port && port !== '3000') {
+      return `http://${hostname}:3000`;
+    }
+
+    return origin;
+  } catch {
+    return 'http://localhost:3000';
+  }
 }
+
+const API_BASE = resolveApiBase();
+
+// Persistent active budget id
+const LS_BUDGET_ID = 'budget_app_active_budget_id';
 
 function getActiveBudgetId() {
   try {
-    return localStorage.getItem(LS_ACTIVE_ID) || '';
+    return localStorage.getItem(LS_BUDGET_ID) || '';
   } catch {
     return '';
   }
 }
 
-function setActiveBudget(id, name = '', date = '') {
+function setActiveBudgetId(id) {
   try {
-    if (id) localStorage.setItem(LS_ACTIVE_ID, id);
-    else localStorage.removeItem(LS_ACTIVE_ID);
-
-    const key = makeKey(name, date);
-    if (key !== '||') localStorage.setItem(LS_ACTIVE_KEY, key);
-    else localStorage.removeItem(LS_ACTIVE_KEY);
-  } catch {
-    // ignore storage errors
-  }
-}
-
-function clearActiveBudget() {
-  setActiveBudget('', '', '');
-}
-
-/**
- * SAFETY:
- * If the user changes name/date from what we last associated with the active ID,
- * treat it as a new budget to avoid overwriting the wrong one.
- */
-function maybeClearActiveIfKeyChanged(name, date) {
-  try {
-    const activeId = getActiveBudgetId();
-    if (!activeId) return;
-
-    const lastKey = localStorage.getItem(LS_ACTIVE_KEY) || '';
-    const newKey = makeKey(name, date);
-
-    // If we have a lastKey and the user changed it, clear the active ID.
-    if (lastKey && newKey && lastKey !== newKey) {
-      clearActiveBudget();
-    }
+    if (id) localStorage.setItem(LS_BUDGET_ID, id);
+    else localStorage.removeItem(LS_BUDGET_ID);
   } catch {
     // ignore
   }
@@ -82,10 +62,8 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
     const csvText = await response.text();
     loadCSV(csvText, regenerators, updateBudgetFn);
 
-    // Mark this budget as the active one (so future saves overwrite it)
-    // We may not know name/date at this exact moment (depends on your CSV loader),
-    // but we can at least persist the ID. The save flow will update name/date key.
-    setActiveBudget(budgetId);
+    // Mark this budget as active so subsequent saves overwrite it
+    setActiveBudgetId(budgetId);
 
     if (statusEl) {
       statusEl.textContent = 'Budget loaded successfully!';
@@ -138,6 +116,7 @@ export async function populateBudgetSelector(selectId) {
       option.textContent = `${budget.name} - ${budget.date} (Saved: ${timeStr})`;
       select.appendChild(option);
     });
+
   } catch (error) {
     console.error('Error populating budget selector:', error);
     alert('Failed to load budget list from server');
@@ -146,24 +125,21 @@ export async function populateBudgetSelector(selectId) {
 
 export async function saveBudgetToServer(csvData, metadata = {}) {
   try {
-    const name = metadata.name || 'Untitled Budget';
-    const date = metadata.date || new Date().toISOString().split('T')[0];
-
-    // Safety: if user changed name/date, stop using previous active ID
-    maybeClearActiveIfKeyChanged(name, date);
-
     const activeId = getActiveBudgetId();
 
     const payload = {
       csv: csvData,
-      name,
-      date,
-      // Core change: send budgetId when available so server overwrites same files
-      ...(activeId ? { budgetId: activeId } : {})
+      name: metadata.name || 'Untitled Budget',
+      date: metadata.date || new Date().toISOString().split('T')[0]
     };
 
-    // Include other metadata fields safely
-    const { csv, budgetId, ...rest } = metadata;
+    // Critical: include the persisted budgetId so server overwrites the same files
+    if (activeId) {
+      payload.budgetId = activeId;
+    }
+
+    // Allow extra metadata fields, but do not let them override csv/name/date/budgetId unintentionally
+    const { csv, name, date, budgetId, ...rest } = metadata;
     Object.assign(payload, rest);
 
     const response = await fetch(`${API_BASE}/api/budgets`, {
@@ -180,9 +156,9 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
 
     const result = await response.json();
 
-    // Persist the returned ID as the active budget for future overwrites
+    // Persist returned id as the active budget id
     if (result && result.id) {
-      setActiveBudget(result.id, name, date);
+      setActiveBudgetId(result.id);
     }
 
     return result;
@@ -211,19 +187,10 @@ export async function deleteBudgetFromServer(budgetId) {
     throw new Error(`Failed to delete budget: ${response.status} ${response.statusText}`);
   }
 
-  // If deleting active budget, clear it
-  const activeId = getActiveBudgetId();
-  if (activeId && activeId === budgetId) {
-    clearActiveBudget();
+  // If deleting the active budget, clear it
+  if (getActiveBudgetId() === budgetId) {
+    setActiveBudgetId('');
   }
 
   return await response.json();
-}
-
-/**
- * Optional exports you can wire to a "New Budget" / "Clear" button.
- * Not required for correctness, but useful for UX.
- */
-export function clearActiveBudgetId() {
-  clearActiveBudget();
 }
