@@ -786,7 +786,8 @@ button.danger:hover{
 
     /* ensure wrapper padding doesn't push cards wider than viewport */
     .page-wrapper {
-        padding: 14px 12px;
+        /* Move content down so the fixed Menu button never covers the title */
+        padding: calc(14px + var(--top-ui-height) + 16px) 12px 14px;
         max-width: 100%;
     }
 
