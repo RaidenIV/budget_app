@@ -168,9 +168,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
 }
 
-/* Spacing between Show Date and the next card */
+/* ----------------------------------------------------------
+   SPACING FIX: Add padding after Show Date
+---------------------------------------------------------- */
 #showDate {
-    margin-bottom: var(--card-gap);
+    margin-bottom: 24px;
 }
 
 /* ----------------------------------------------------------
@@ -258,6 +260,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ----------------------------------------------------------
+   SUPPORT CARD - MATCHES HEADLINER CARD STYLE
+---------------------------------------------------------- */
+.support-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.support-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ----------------------------------------------------------
    CHARTS STYLING - CONSISTENT SPACING
 ---------------------------------------------------------- */
 .charts-section {
@@ -304,252 +325,401 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .chart-canvas-wrap {
-    position: relative;
     width: 100%;
-    height: 240px;
 }
 
 .chart-canvas-wrap canvas {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
 }
 
 .chart-actions {
     width: 100%;
+    margin-top: 20px;
     display: flex;
     justify-content: center;
-    margin-top: 10px;
 }
 
 /* ----------------------------------------------------------
-   SUMMARY BOX - CONSISTENT SPACING
+   SUMMARY SECTION
 ---------------------------------------------------------- */
 #summary {
     background: var(--panel);
-    padding: 16px;
+    padding: 18px;
     border-radius: 14px;
     border: 1px solid var(--line);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
     margin-bottom: var(--card-gap);
-    text-align: center;
-    font-weight: bold;
-}
-
-#summary p {
-    color: var(--text);
-    margin: 8px 0;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .summary-title {
     font-weight: 800;
-    font-size: 24px;
-    margin: 0 0 10px 0;
+    font-size: 20px;
+    margin-bottom: 12px;
     text-align: center;
-    letter-spacing: 0.5px;
-    color: var(--accent);
-}
-
-/* ----------------------------------------------------------
-   SERVER LOAD SECTION - CONSISTENT SPACING
----------------------------------------------------------- */
-.server-load-section {
-    background: var(--panel);
-    padding: 20px;
-    border-radius: 14px;
-    margin-bottom: var(--card-gap);
-    border: 1px solid var(--line);
-}
-
-.server-load-section h3 {
-    margin-top: 0;
-    font-size: 18px;
     color: var(--text);
 }
 
-.server-load-section label {
-    color: var(--muted);
+#summary p {
+    margin: 8px 0;
+    font-size: 16px;
+    color: var(--text);
 }
 
-.server-load-section select {
-    width: 100%;
-    max-width: 400px;
-    margin: 10px 0;
-}
-
-.load-status {
-    display: inline-block;
-    margin-left: 10px;
-    font-size: 14px;
-    color: var(--muted);
-}
-
-.load-status.success {
-    color: var(--success);
-}
-
-.load-status.error {
-    color: #ff6b6b;
+#profitLine {
+    font-weight: bold;
+    font-size: 18px;
+    margin-top: 12px;
 }
 
 /* ----------------------------------------------------------
    TEXT PREVIEW
 ---------------------------------------------------------- */
 #textPreview {
-    margin: 0;
-    background: var(--input-bg);
-    padding: 15px;
-    border-radius: 10px;
+    background: var(--panel);
+    padding: 18px;
+    border-radius: 14px;
     border: 1px solid var(--line);
+    margin-bottom: 12px;
     white-space: pre-wrap;
-    font-family: Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.35;
-    overflow: visible;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
     color: var(--text);
+    overflow-x: auto;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .text-preview-actions {
-    margin-top: 10px;
     display: flex;
     gap: 10px;
+    margin-bottom: var(--card-gap);
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
 }
 
 .copy-status {
-    font-size: 14px;
-    opacity: 0.85;
-    color: var(--muted);
+    margin-left: 8px;
+    font-size: 13px;
+    color: var(--success);
+}
+
+/* ----------------------------------------------------------
+   SERVER LOAD SECTION
+---------------------------------------------------------- */
+.server-load-section {
+    background: var(--panel);
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    margin-bottom: var(--card-gap);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.server-load-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+}
+
+.server-load-section label {
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.server-load-section select {
+    margin-bottom: 12px;
+}
+
+.load-save-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.load-save-row button {
+    flex: 1;
+}
+
+.load-status {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--success);
+    text-align: center;
 }
 
 /* ----------------------------------------------------------
    BUTTONS
 ---------------------------------------------------------- */
-.controls {
-    text-align: center;
-    margin-top: 16px;
-}
-
 button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
     background: var(--button-bg);
     color: var(--text);
-    padding: 10px 18px;
-    margin: 6px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
     cursor: pointer;
     font-weight: 700;
+    font-size: 14px;
+    transition: background 0.3s ease, transform 0.1s ease;
     font-family: 'Rajdhani', sans-serif;
-    transition: background 0.25s ease;
 }
 
 button:hover {
     background: var(--button-hover);
 }
 
+button:active {
+    transform: scale(0.98);
+}
+
 button.danger {
-    background: #b52b2b;
-    border-color: #b52b2b;
+    background: #d9534f;
+    color: white;
 }
 
 button.danger:hover {
-    background: #d03030;
+    background: #c9302c;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.controls button {
+    flex: 1;
+    min-width: 120px;
 }
 
 /* ----------------------------------------------------------
-   NAV DROPDOWN
+   NAVIGATION DROPDOWN (TOP LEFT)
 ---------------------------------------------------------- */
 .nav-dropdown {
     position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 9999;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
 }
 
 .nav-toggle {
-    background: var(--button-bg);
-    border: 1px solid var(--line);
-    color: var(--text);
     padding: 10px 16px;
-    font-weight: 700;
-    border-radius: 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--button-bg);
+    color: var(--text);
     cursor: pointer;
-    min-height: var(--top-ui-height);
+    font-weight: 700;
+    font-size: 14px;
+    transition: background 0.3s ease;
+    font-family: 'Rajdhani', sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.nav-toggle:hover {
+    background: var(--button-hover);
 }
 
 .nav-menu {
-    display: none;
-    margin-top: 10px;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-    min-width: 220px;
+    border-radius: 10px;
+    padding: 8px 0;
+    min-width: 180px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
 }
 
-.nav-dropdown.open .nav-menu {
-    display: block;
+.nav-dropdown.active .nav-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .nav-menu a {
     display: block;
-    padding: 12px 14px;
+    padding: 10px 16px;
     color: var(--text);
     text-decoration: none;
-    font-weight: 700;
-    border-bottom: 1px solid var(--line);
-}
-
-.nav-menu a:last-child {
-    border-bottom: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: background 0.2s ease;
 }
 
 .nav-menu a:hover {
-    background: rgba(0, 153, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* ----------------------------------------------------------
-   EXTRA GAP CONTROL / MOBILE WIDTH HARDENING
+   UTILITY & LAYOUT HELPERS
 ---------------------------------------------------------- */
-
-.main-container > * > :last-child {
-    margin-bottom: 0 !important;
+.hidden {
+    display: none;
 }
 
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
-@media (max-width: 600px) {
-    html, body {
-        overflow-x: hidden;
-        width: 100%;
-    }
-
+/* Mobile friendly enhancements */
+@media (max-width: 768px) {
     .page-wrapper {
-        padding: calc(14px + var(--top-ui-height) + 16px) 12px 14px;
-        max-width: 100%;
+        padding: 15px;
     }
 
-    form,
-    .charts-section,
-    #summary,
-    .collapsible,
-    .headliner-card {
+    h1 {
+        font-size: 24px;
+    }
+
+    .controls {
+        flex-direction: column;
+    }
+
+    .controls button {
         width: 100%;
-        max-width: 100%;
     }
 
     .nav-dropdown {
-        top: 12px;
-        left: 12px;
+        top: 10px;
+        left: 10px;
     }
+}
 
-    .main-container,
-    .preview-panel,
-    .form-panel,
-    .chart-panel {
-        max-width: 100%;
-    }
+/* ----------------------------------------------------------
+   SCROLLBAR STYLING
+---------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+}
+
+/* ----------------------------------------------------------
+   LOCAL DJ CARDS (MATCHING HEADLINER STYLE)
+---------------------------------------------------------- */
+.local-dj-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.local-dj-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ----------------------------------------------------------
+   CDJ CARDS (MATCHING HEADLINER STYLE)
+---------------------------------------------------------- */
+.cdj-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.cdj-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ----------------------------------------------------------
+   SHOW RUNNER CARDS (MATCHING HEADLINER STYLE)
+---------------------------------------------------------- */
+.show-runner-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.show-runner-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ----------------------------------------------------------
+   MERCH VENDOR CARDS (MATCHING HEADLINER STYLE)
+---------------------------------------------------------- */
+.merch-vendor-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.merch-vendor-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ----------------------------------------------------------
+   OTHER CATEGORY CARDS (MATCHING HEADLINER STYLE)
+---------------------------------------------------------- */
+.other-category-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.other-category-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ----------------------------------------------------------
+   OTHER ITEM CARDS (MATCHING HEADLINER STYLE)
+---------------------------------------------------------- */
+.other-item-card {
+    background: var(--input-bg);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: var(--card-gap);
+}
+
+.other-item-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
 }
