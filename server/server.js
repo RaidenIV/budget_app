@@ -9,21 +9,11 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-/**
- * FRONTEND SERVING (matches your repo structure)
- * Repo layout:
- *   budget_app/
- *     client/index.html
- *     server/server.js
- *
- * So from /server, the frontend is ../client
- */
+// Serve frontend from ../client (repo layout)
 const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(__dirname, '..', 'client');
 const INDEX_FILE = process.env.INDEX_FILE || 'index.html';
 
 app.use(express.static(FRONTEND_DIR));
-
-// Fixes GET / (prevents "Cannot GET /" / "Not found")
 app.get('/', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, INDEX_FILE));
 });
@@ -44,11 +34,6 @@ function sanitizeIdPart(str) {
     .replace(/^_+|_+$/g, '');
 }
 
-/**
- * Stable ID per budget:
- * One file per (name + date) combination.
- * Save again with same name/date => overwrite same files.
- */
 function buildBudgetId(name, date) {
   const n = sanitizeIdPart(name) || 'untitled';
   const d = sanitizeIdPart(date) || 'nodate';
@@ -66,25 +51,37 @@ async function fileExists(p) {
 
 // ---------- routes ----------
 
-// GET all budgets (metadata list)
+// GET all budgets (metadata list) — resilient to bad json files
 app.get('/api/budgets', async (req, res) => {
   try {
     const files = await fs.readdir(BUDGETS_DIR);
-    const budgets = await Promise.all(
-      files
-        .filter(f => f.endsWith('.json'))
-        .map(async (file) => {
-          const content = await fs.readFile(path.join(BUDGETS_DIR, file), 'utf8');
-          return JSON.parse(content);
-        })
-    );
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    const budgets = [];
+    for (const file of jsonFiles) {
+      const fullPath = path.join(BUDGETS_DIR, file);
+      try {
+        const content = await fs.readFile(fullPath, 'utf8');
+        const parsed = JSON.parse(content);
+
+        // minimal sanity check
+        if (parsed && parsed.id && parsed.name && parsed.date) {
+          budgets.push(parsed);
+        } else {
+          console.warn('Skipping malformed budget metadata:', fullPath);
+        }
+      } catch (e) {
+        console.warn('Skipping unreadable/invalid JSON budget metadata:', fullPath, e.message);
+      }
+    }
+
     res.json(budgets);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch budgets' });
   }
 });
 
-// GET specific budget CSV by ID
+// GET specific budget (csv)
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     const csv = await fs.readFile(
@@ -97,7 +94,7 @@ app.get('/api/budgets/:id', async (req, res) => {
   }
 });
 
-// POST upsert budget (overwrite instead of creating a new file each time)
+// POST upsert budget (one file per budget)
 app.post('/api/budgets', async (req, res) => {
   try {
     const { csv, name, date } = req.body;
@@ -109,7 +106,6 @@ app.post('/api/budgets', async (req, res) => {
     const safeName = name || 'Untitled Budget';
     const safeDate = date || new Date().toISOString().split('T')[0];
 
-    // Stable ID per budget
     const id = buildBudgetId(safeName, safeDate);
 
     const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
@@ -117,7 +113,6 @@ app.post('/api/budgets', async (req, res) => {
 
     const nowIso = new Date().toISOString();
 
-    // Preserve createdAt if it already exists
     let createdAt = nowIso;
     if (await fileExists(metaPath)) {
       try {
@@ -128,10 +123,8 @@ app.post('/api/budgets', async (req, res) => {
       }
     }
 
-    // Write/overwrite CSV
     await fs.writeFile(csvPath, csv, 'utf8');
 
-    // Write/overwrite metadata
     const metadata = {
       id,
       name: safeName,
@@ -148,7 +141,7 @@ app.post('/api/budgets', async (req, res) => {
   }
 });
 
-// DELETE budget (csv + json)
+// DELETE budget
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
     await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.csv`));
@@ -165,24 +158,30 @@ app.get('/api/budgets/search', async (req, res) => {
     const { name, dateFrom, dateTo } = req.query;
 
     const files = await fs.readdir(BUDGETS_DIR);
-    let budgets = await Promise.all(
-      files
-        .filter(f => f.endsWith('.json'))
-        .map(async (file) => {
-          const content = await fs.readFile(path.join(BUDGETS_DIR, file), 'utf8');
-          return JSON.parse(content);
-        })
-    );
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    const budgets = [];
+    for (const file of jsonFiles) {
+      const fullPath = path.join(BUDGETS_DIR, file);
+      try {
+        const content = await fs.readFile(fullPath, 'utf8');
+        const parsed = JSON.parse(content);
+        if (parsed && parsed.id) budgets.push(parsed);
+      } catch {
+        // skip bad json
+      }
+    }
+
+    let filtered = budgets;
 
     if (name) {
       const q = String(name).toLowerCase();
-      budgets = budgets.filter(b => (b.name || '').toLowerCase().includes(q));
+      filtered = filtered.filter(b => (b.name || '').toLowerCase().includes(q));
     }
+    if (dateFrom) filtered = filtered.filter(b => b.date >= dateFrom);
+    if (dateTo) filtered = filtered.filter(b => b.date <= dateTo);
 
-    if (dateFrom) budgets = budgets.filter(b => b.date >= dateFrom);
-    if (dateTo) budgets = budgets.filter(b => b.date <= dateTo);
-
-    res.json(budgets);
+    res.json(filtered);
   } catch (error) {
     res.status(500).json({ error: 'Search failed' });
   }
@@ -192,5 +191,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Serving frontend from: ${FRONTEND_DIR}`);
-  console.log(`Index file: ${INDEX_FILE}`);
 });
