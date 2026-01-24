@@ -48,30 +48,61 @@ async function fileExists(p) {
   }
 }
 
+function toTimeMs(isoLike) {
+  const t = Date.parse(String(isoLike || ''));
+  return Number.isFinite(t) ? t : 0;
+}
+
+function keyNameDate(name, date) {
+  // Normalize for grouping only (display still uses original name/date)
+  const n = String(name || '').trim().toLowerCase();
+  const d = String(date || '').trim();
+  return `${n}||${d}`;
+}
+
 // ---------- routes ----------
 // IMPORTANT: Specific routes MUST come before parameterized routes!
 
-// list budgets (metadata)
+// list budgets (metadata) - DEDUPED by (name, date) keeping the latest updatedAt/createdAt
 app.get('/api/budgets', async (req, res) => {
   try {
     const files = await fs.readdir(BUDGETS_DIR);
     const jsonFiles = files.filter(f => f.endsWith('.json'));
 
-    const budgets = [];
+    const all = [];
     for (const file of jsonFiles) {
       const fullPath = path.join(BUDGETS_DIR, file);
       try {
         const content = await fs.readFile(fullPath, 'utf8');
         const parsed = JSON.parse(content);
         if (parsed && parsed.id && parsed.name && parsed.date) {
-          budgets.push(parsed);
+          all.push(parsed);
         }
       } catch (err) {
         console.warn(`Skipping invalid JSON file: ${file}`, err.message);
       }
     }
 
-    console.log(`[GET /api/budgets] Returning ${budgets.length} budgets`);
+    // Deduplicate by (name,date), keep newest by updatedAt then createdAt
+    const bestByKey = new Map();
+    for (const b of all) {
+      const k = keyNameDate(b.name, b.date);
+      const score = Math.max(toTimeMs(b.updatedAt), toTimeMs(b.createdAt));
+
+      const existing = bestByKey.get(k);
+      if (!existing) {
+        bestByKey.set(k, { b, score });
+        continue;
+      }
+
+      if (score > existing.score) {
+        bestByKey.set(k, { b, score });
+      }
+    }
+
+    const budgets = Array.from(bestByKey.values()).map(x => x.b);
+
+    console.log(`[GET /api/budgets] Found ${all.length} metadata files, returning ${budgets.length} after dedupe`);
     res.json(budgets);
   } catch (error) {
     console.error('[GET /api/budgets] Error:', error);
@@ -117,15 +148,15 @@ app.get('/api/budgets/search', async (req, res) => {
   }
 });
 
-// load a budget csv - NOW comes after /search
+// load a budget csv
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`[GET /api/budgets/${id}] Loading budget...`);
-    
+
     const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
     const csv = await fs.readFile(csvPath, 'utf8');
-    
+
     console.log(`[GET /api/budgets/${id}] Successfully loaded ${csv.length} bytes`);
     res.type('text/csv').send(csv);
   } catch (error) {
@@ -199,13 +230,13 @@ app.delete('/api/budgets/:id', async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`[DELETE /api/budgets/${id}] Deleting budget...`);
-    
+
     const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
     const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
-    
+
     await fs.unlink(csvPath);
     await fs.unlink(metaPath);
-    
+
     console.log(`[DELETE /api/budgets/${id}] Successfully deleted`);
     res.json({ message: 'Budget deleted successfully' });
   } catch (error) {
