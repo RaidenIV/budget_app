@@ -96,6 +96,19 @@ h2 {
         position: static;
         top: auto;
     }
+    
+    .page-wrapper {
+        padding: 80px 15px 25px 15px;
+    }
+    
+    form,
+    .charts-section,
+    #summary,
+    .headliner-card,
+    .collapsible,
+    .other-category-wrapper {
+        padding: 16px;
+    }
 }
 
 .ads-split-row {
