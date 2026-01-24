@@ -96,19 +96,6 @@ h2 {
         position: static;
         top: auto;
     }
-    
-    .page-wrapper {
-        padding: 80px 15px 25px 15px;
-    }
-    
-    form,
-    .charts-section,
-    #summary,
-    .headliner-card,
-    .collapsible,
-    .other-category-wrapper {
-        padding: 16px;
-    }
 }
 
 .ads-split-row {
@@ -780,4 +767,50 @@ button.danger:hover{
 /* Remove bottom margin from last card in each column to prevent extra space */
 .main-container > * > :last-child {
     margin-bottom: 0 !important;
+}
+
+/* ----------------------------------------------------------
+   MOBILE WIDTH HARDENING (prevents card overflow)
+   (Added in v2)
+---------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+    /* prevent any horizontal scrolling caused by padding + intrinsic controls */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    /* ensure wrapper padding doesn't push cards wider than viewport */
+    .page-wrapper {
+        padding: 14px 12px;
+        max-width: 100%;
+    }
+
+    /* cards/panels must never exceed viewport width */
+    form,
+    .charts-section,
+    #summary,
+    .collapsible,
+    .headliner-card {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* keep the top-left menu from forcing horizontal overflow */
+    .nav-dropdown {
+        top: 12px;
+        left: 12px;
+    }
+
+    /* extra safety for any long content */
+    .main-container,
+    .preview-panel,
+    .form-panel,
+    .chart-panel {
+        max-width: 100%;
+    }
 }
