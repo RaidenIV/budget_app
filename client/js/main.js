@@ -1,7 +1,7 @@
-// client/js/main.js - Main application controller (WORKING)
+// client/js/main.js
+// Purpose: bridge ES modules to the global functions referenced by index.html inline handlers.
 
 import { state } from './modules/state.js';
-import { buildChartsPngFileName } from './modules/utils.js';
 
 import {
   regenerateHeadliners,
@@ -14,20 +14,10 @@ import {
 } from './modules/repeaters.js';
 
 import { calculateBudget, updateSummaryDisplay } from './modules/budgetCalculator.js';
-import { updateCharts, downloadChartsPNG } from './modules/charts.js';
+import { updateCharts, downloadChartsPNG, setChartsTitle } from './modules/charts.js';
+import { updateTextPreview, copyTextPreview, exportTextPreviewTxt } from './modules/textPreview.js';
 
-import {
-  updateTextPreview,
-  copyTextPreview,
-  exportTextPreviewTxt
-} from './modules/textPreview.js';
-
-import {
-  buildCSVString,
-  downloadCSV,
-  setupCSVImport,
-  triggerImport
-} from './modules/csv.js';
+import { buildCSVString, downloadCSV, loadCSV, setupCSVImport, triggerImport } from './modules/csv.js';
 
 import {
   populateBudgetSelector,
@@ -36,271 +26,194 @@ import {
   deleteBudgetFromServer
 } from './modules/serverLoad.js';
 
-/* ------------------------------------------------------------
-   Small utilities
------------------------------------------------------------- */
-
 function $(id) {
   return document.getElementById(id);
 }
 
-function safe(fn, ...args) {
-  try {
-    if (typeof fn === 'function') return fn(...args);
-  } catch (e) {
-    console.error('Error calling function:', fn?.name || fn, e);
-  }
-  return undefined;
-}
-
-function getMetadataFromUI() {
-  // These IDs are referenced in your CSV module too
+function getMeta() {
   const name = ($('showTitle')?.value ?? '').trim() || 'Untitled Budget';
-  const date = ($('showDate')?.value ?? '').trim() || new Date().toISOString().split('T')[0];
+  const date = ($('showDate')?.value ?? '').trim() || new Date().toISOString().slice(0, 10);
   return { name, date };
 }
 
-/* ------------------------------------------------------------
-   Core update pipeline
------------------------------------------------------------- */
+/**
+ * Core recalculation + UI refresh.
+ * IMPORTANT: must be global because index.html calls updateBudget() inline. :contentReference[oaicite:1]{index=1}
+ */
+function updateBudgetImpl() {
+  const budgetData = calculateBudget(state);
 
-function updateBudget() {
-  // 1) Calculate
-  const budgetData = safe(calculateBudget, state);
+  // Summary
+  try { updateSummaryDisplay(budgetData); } catch (e) { /* allow older signatures */ }
+  try { updateSummaryDisplay(state, budgetData); } catch (e) {}
 
-  // 2) Update summary (signature varies across implementations)
-  // Try common patterns: updateSummaryDisplay(budgetData) or updateSummaryDisplay(state, budgetData)
-  if (budgetData !== undefined) {
-    safe(updateSummaryDisplay, budgetData);
-    safe(updateSummaryDisplay, state, budgetData);
-  } else {
-    safe(updateSummaryDisplay, state);
-  }
+  // Charts
+  try { updateCharts(budgetData); } catch (e) {}
+  try { updateCharts(budgetData?.expenses, budgetData?.revenue); } catch (e) {}
+  try { updateCharts(state, budgetData); } catch (e) {}
 
-  // 3) Update charts (signature varies)
-  // Try: updateCharts(budgetData), updateCharts(expenses, revenue), updateCharts(state, budgetData)
-  if (budgetData !== undefined) {
-    safe(updateCharts, budgetData);
-    safe(updateCharts, budgetData.expenses, budgetData.revenue);
-    safe(updateCharts, state, budgetData);
-  } else {
-    safe(updateCharts, state);
-  }
+  // Charts title (if module supports it)
+  try { setChartsTitle(getMeta().name); } catch (e) {}
 
-  // 4) Update preview text (signature varies)
-  if (budgetData !== undefined) {
-    safe(updateTextPreview, budgetData);
-    safe(updateTextPreview, state, budgetData);
-  } else {
-    safe(updateTextPreview, state);
-  }
+  // Text preview
+  try { updateTextPreview(budgetData); } catch (e) {}
+  try { updateTextPreview(state, budgetData); } catch (e) {}
 
   return budgetData;
 }
 
-/* ------------------------------------------------------------
-   Regenerators for CSV import + dynamic fields
------------------------------------------------------------- */
+/**
+ * Regenerator wrappers (must be global because index.html calls them inline). :contentReference[oaicite:2]{index=2}
+ */
+function makeRegenerators() {
+  return {
+    headliners: () => regenerateHeadliners(window.updateBudget),
+    localDJs: () => regenerateLocalDJs(window.updateBudget),
+    cdjs: () => regenerateCDJs(window.updateBudget),
+    showRunners: () => regenerateShowRunners(window.updateBudget),
+    vendors: () => regenerateVendors(window.updateBudget),
+    otherCategories: () => regenerateOtherCategories(window.updateBudget),
+    otherItems: (c) => regenerateOtherItems(c, window.updateBudget),
+    merchVendors: () => regenerateVendors(window.updateBudget) // alias; csv.js references regenerators.merchVendors :contentReference[oaicite:3]{index=3}
+  };
+}
 
-const regenerators = {
-  headliners: () => regenerateHeadliners(updateBudget),
-  localDJs: () => regenerateLocalDJs(updateBudget),
-  cdjs: () => regenerateCDJs(updateBudget),
-  showRunners: () => regenerateShowRunners(updateBudget),
-  vendors: () => regenerateVendors(updateBudget),
-  otherCategories: () => regenerateOtherCategories(updateBudget),
-  otherItems: (c) => regenerateOtherItems(c, updateBudget)
-};
+const regenerators = makeRegenerators();
 
-/* ------------------------------------------------------------
-   Server actions
------------------------------------------------------------- */
+/**
+ * Server handlers expected by index.html inline onclick/onchange. :contentReference[oaicite:4]{index=4}
+ */
+async function handleSaveBudgetToServerImpl() {
+  const csvText = buildCSVString();
+  const meta = getMeta();
+  const result = await saveBudgetToServer(csvText, meta);
 
-async function refreshBudgetSelector(keepSelectedId = '') {
+  // Refresh list after save so updatedAt changes show up
   await populateBudgetSelector('budgetSelector');
 
-  if (keepSelectedId) {
+  // Keep selection on the saved budget if server returns id
+  if (result?.id) {
     const sel = $('budgetSelector');
-    if (sel) sel.value = keepSelectedId;
+    if (sel) sel.value = result.id;
   }
 }
 
-async function onSaveToServer() {
-  // Build CSV from DOM/state (your csv.js reads inputs by ID)
-  const csvText = buildCSVString();
-  const metadata = getMetadataFromUI();
-
-  const result = await saveBudgetToServer(csvText, metadata);
-
-  // Refresh selector list and keep saved budget selected (if server returns id)
-  if (result && result.id) {
-    await refreshBudgetSelector(result.id);
-  } else {
-    await refreshBudgetSelector();
-  }
-
-  // Optional status message element
-  const statusEl = $('saveStatus');
-  if (statusEl) {
-    statusEl.textContent = 'Saved!';
-    setTimeout(() => (statusEl.textContent = ''), 1500);
-  }
-}
-
-async function onLoadSelectedBudget() {
+async function handleLoadSelectedBudgetImpl() {
   const sel = $('budgetSelector');
   const id = sel?.value;
   if (!id) return;
-
-  await loadBudgetFromServer(id, regenerators, updateBudget);
-  updateBudget();
+  await loadBudgetFromServer(id, regenerators, window.updateBudget);
 }
 
-async function onDeleteSelectedBudget() {
+async function handleBudgetSelectionImpl(budgetId) {
+  // index.html calls this on dropdown change; we’ll just no-op if empty,
+  // and *not* auto-load unless you want it.
+  if (!budgetId) return;
+  // Optional: auto-load on selection
+  // await loadBudgetFromServer(budgetId, regenerators, window.updateBudget);
+}
+
+async function handleDeleteSelectedBudgetImpl() {
   const sel = $('budgetSelector');
   const id = sel?.value;
   if (!id) return;
-
   const ok = confirm('Delete this saved budget? This cannot be undone.');
   if (!ok) return;
 
   await deleteBudgetFromServer(id);
-  await refreshBudgetSelector('');
-  updateBudget();
+  await populateBudgetSelector('budgetSelector');
+  if (sel) sel.value = '';
 }
 
-/* ------------------------------------------------------------
-   CSV actions
------------------------------------------------------------- */
+/**
+ * index.html calls downloadAll(). It didn’t exist in your uploaded files.
+ * Provide a reasonable implementation: export CSV + charts PNG + text preview txt.
+ */
+async function downloadAllImpl() {
+  // CSV
+  downloadCSV();
 
-function onExportCSV() {
-  // Your csv.js already generates filename from show title/date
-  safe(downloadCSV);
+  // Charts PNG (your charts module expects no args per index.html usage) :contentReference[oaicite:5]{index=5}
+  try { downloadChartsPNG(); } catch (e) {}
+
+  // Text preview TXT
+  try { exportTextPreviewTxt(); } catch (e) {}
 }
 
-function onImportCSV() {
-  safe(triggerImport);
-}
+/**
+ * Expose globals expected by inline HTML handlers.
+ * This is the critical fix.
+ */
+function exposeGlobals() {
+  // Core
+  window.updateBudget = updateBudgetImpl;
 
-/* ------------------------------------------------------------
-   Preview + charts actions
------------------------------------------------------------- */
+  // Repeaters
+  window.regenerateHeadliners = () => regenerateHeadliners(window.updateBudget);
+  window.regenerateLocalDJs = () => regenerateLocalDJs(window.updateBudget);
+  window.regenerateCDJs = () => regenerateCDJs(window.updateBudget);
+  window.regenerateShowRunners = () => regenerateShowRunners(window.updateBudget);
+  window.regenerateVendors = () => regenerateVendors(window.updateBudget);
+  window.regenerateOtherCategories = () => regenerateOtherCategories(window.updateBudget);
+  window.regenerateOtherItems = (c) => regenerateOtherItems(c, window.updateBudget);
 
-function onCopyPreview() {
-  safe(copyTextPreview);
-}
+  // CSV
+  window.downloadCSV = downloadCSV;
+  window.triggerImport = triggerImport;
 
-function onExportPreviewTxt() {
-  safe(exportTextPreviewTxt);
-}
+  // Preview actions (index.html calls these inline) :contentReference[oaicite:6]{index=6}
+  window.copyTextPreview = copyTextPreview;
+  window.exportTextPreviewTxt = exportTextPreviewTxt;
 
-function onExportChartsPng() {
-  const meta = getMetadataFromUI();
-  const fname = safe(buildChartsPngFileName, meta) || 'charts.png';
-  safe(downloadChartsPNG, fname);
-}
+  // Charts export (index.html calls downloadChartsPNG() inline) :contentReference[oaicite:7]{index=7}
+  window.downloadChartsPNG = downloadChartsPNG;
 
-/* ------------------------------------------------------------
-   Wire UI
------------------------------------------------------------- */
-
-function bindClick(idList, handler) {
-  for (const id of idList) {
-    const el = $(id);
-    if (el) {
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        handler();
-      });
-      return true;
-    }
-  }
-  return false;
-}
-
-function bindChange(idList, handler) {
-  for (const id of idList) {
-    const el = $(id);
-    if (el) {
-      el.addEventListener('change', handler);
-      return true;
-    }
-  }
-  return false;
-}
-
-function installLiveUpdate() {
-  // Lightweight live-update: any input/select/textarea changes trigger recalculation
-  // Debounced to avoid heavy redraw during typing.
-  let t = null;
-  document.addEventListener('input', (e) => {
-    const tag = e.target?.tagName?.toLowerCase();
-    if (tag !== 'input' && tag !== 'select' && tag !== 'textarea') return;
-
-    clearTimeout(t);
-    t = setTimeout(() => updateBudget(), 60);
-  });
-}
-
-/* ------------------------------------------------------------
-   Init
------------------------------------------------------------- */
-
-window.addEventListener('DOMContentLoaded', async () => {
-  // Ensure CSV import is wired (creates hidden file input)
-  safe(setupCSVImport, regenerators, updateBudget);
-
-  // Initialize repeaters (at least one headliner)
-  regenerateHeadliners(updateBudget);
-
-  // Initial render
-  updateBudget();
-
-  // Populate server budget selector (safe if server offline)
-  try {
-    await refreshBudgetSelector();
-  } catch (e) {
-    console.warn('Could not populate budget selector:', e);
-  }
-
-  // Buttons (supports multiple possible IDs)
-  bindClick(['btnExportCSV', 'exportCSVBtn', 'downloadCsvBtn', 'downloadCSV'], onExportCSV);
-  bindClick(['btnImportCSV', 'importCSVBtn', 'importCsvBtn'], onImportCSV);
-
-  bindClick(['btnCopyPreview', 'copyPreviewBtn', 'copyTextBtn'], onCopyPreview);
-  bindClick(['btnExportPreview', 'exportPreviewBtn', 'exportTxtBtn'], onExportPreviewTxt);
-
-  bindClick(['btnExportCharts', 'exportChartsBtn', 'downloadChartsBtn'], onExportChartsPng);
-
-  bindClick(['btnSaveServer', 'saveServerBtn', 'saveToServerBtn', 'saveBudgetBtn'], () => {
-    onSaveToServer().catch((e) => {
+  // Server load/save handlers used by index.html
+  window.handleSaveBudgetToServer = () =>
+    handleSaveBudgetToServerImpl().catch((e) => {
       console.error(e);
       alert(`Save failed: ${e.message || e}`);
     });
-  });
 
-  bindClick(['btnLoadServer', 'loadServerBtn', 'loadBudgetBtn'], () => {
-    onLoadSelectedBudget().catch((e) => {
+  window.handleLoadSelectedBudget = () =>
+    handleLoadSelectedBudgetImpl().catch((e) => {
       console.error(e);
       alert(`Load failed: ${e.message || e}`);
     });
-  });
 
-  bindClick(['btnDeleteServer', 'deleteServerBtn', 'deleteBudgetBtn'], () => {
-    onDeleteSelectedBudget().catch((e) => {
+  window.handleBudgetSelection = (v) =>
+    handleBudgetSelectionImpl(v).catch?.((e) => console.error(e));
+
+  // Optional delete handler (not in your HTML currently, but useful)
+  window.handleDeleteSelectedBudget = () =>
+    handleDeleteSelectedBudgetImpl().catch((e) => {
       console.error(e);
       alert(`Delete failed: ${e.message || e}`);
     });
-  });
 
-  // Auto-load on selector change if present
-  bindChange(['budgetSelector'], () => {
-    onLoadSelectedBudget().catch((e) => {
+  // Download all
+  window.downloadAll = () =>
+    downloadAllImpl().catch((e) => {
       console.error(e);
-      alert(`Load failed: ${e.message || e}`);
+      alert(`Download failed: ${e.message || e}`);
     });
-  });
+}
 
-  // Keep budget calculations responsive
-  installLiveUpdate();
+window.addEventListener('DOMContentLoaded', async () => {
+  // Make globals available before any inline handlers fire
+  exposeGlobals();
+
+  // CSV import wiring (creates hidden file input if missing)
+  setupCSVImport(regenerators, window.updateBudget);
+
+  // Initial UI setup
+  regenerateHeadliners(window.updateBudget);
+  window.updateBudget();
+
+  // Populate saved budgets
+  try {
+    await populateBudgetSelector('budgetSelector');
+  } catch (e) {
+    console.warn('Budget list load failed:', e);
+  }
 });
