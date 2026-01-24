@@ -23,8 +23,12 @@ export function calculateBudget() {
       (+document.getElementById(`headliner_rider_${i}`)?.value || 0);
   }
 
-  // Calculate support
-  const directSupport = (+document.getElementById("directSupport")?.value || 0);
+  // Calculate support - UPDATED to include hotel and rider
+  const directSupportFee = (+document.getElementById("directSupport")?.value || 0);
+  const directSupportHotel = (+document.getElementById("directSupportHotel")?.value || 0);
+  const directSupportRider = (+document.getElementById("directSupportRider")?.value || 0);
+  const directSupportTotal = directSupportFee + directSupportHotel + directSupportRider;
+  
   let localDJTotal = 0;
   const numLocalDJs = +document.getElementById("numLocalDJs")?.value || 0;
   for (let i = 1; i <= numLocalDJs; i++) {
@@ -80,7 +84,7 @@ export function calculateBudget() {
 
   const totalExpenses =
     headlinerTotal +
-    directSupport +
+    directSupportTotal +
     localDJTotal +
     productionTotal +
     gearTotal +
@@ -113,7 +117,7 @@ export function calculateBudget() {
   return {
     expenses: {
       Headliners: headlinerTotal,
-      Support: directSupport + localDJTotal,
+      Support: directSupportTotal + localDJTotal,
       Production: productionTotal,
       Gear: gearTotal,
       Marketing: marketingTotal,
