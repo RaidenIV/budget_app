@@ -19,8 +19,6 @@ app.get('/', (req, res) => {
 });
 
 const BUDGETS_DIR = path.join(__dirname, 'budgets');
-
-// Ensure budgets directory exists
 fs.mkdir(BUDGETS_DIR, { recursive: true }).catch(() => {});
 
 // ---------- helpers ----------
@@ -34,10 +32,7 @@ function sanitizeIdPart(str) {
     .replace(/^_+|_+$/g, '');
 }
 
-/**
- * Legacy deterministic ID (used only when client doesn't send budgetId).
- * One file per (name + date).
- */
+// fallback deterministic ID (only used if client doesn't send budgetId)
 function buildBudgetIdFromNameDate(name, date) {
   const n = sanitizeIdPart(name) || 'untitled';
   const d = sanitizeIdPart(date) || 'nodate';
@@ -55,7 +50,7 @@ async function fileExists(p) {
 
 // ---------- routes ----------
 
-// GET all budgets (metadata list) — resilient to bad json files
+// list budgets (metadata)
 app.get('/api/budgets', async (req, res) => {
   try {
     const files = await fs.readdir(BUDGETS_DIR);
@@ -67,15 +62,11 @@ app.get('/api/budgets', async (req, res) => {
       try {
         const content = await fs.readFile(fullPath, 'utf8');
         const parsed = JSON.parse(content);
-
-        // minimal sanity check
         if (parsed && parsed.id && parsed.name && parsed.date) {
           budgets.push(parsed);
-        } else {
-          console.warn('Skipping malformed budget metadata:', fullPath);
         }
-      } catch (e) {
-        console.warn('Skipping unreadable/invalid JSON budget metadata:', fullPath, e.message);
+      } catch {
+        // skip invalid json
       }
     }
 
@@ -85,7 +76,7 @@ app.get('/api/budgets', async (req, res) => {
   }
 });
 
-// GET specific budget (csv)
+// load a budget csv
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     const csv = await fs.readFile(
@@ -98,7 +89,7 @@ app.get('/api/budgets/:id', async (req, res) => {
   }
 });
 
-// POST upsert budget (one file per budget)
+// save (UPSERT)
 app.post('/api/budgets', async (req, res) => {
   try {
     const { csv, name, date, budgetId } = req.body;
@@ -110,34 +101,28 @@ app.post('/api/budgets', async (req, res) => {
     const safeName = name || 'Untitled Budget';
     const safeDate = date || new Date().toISOString().split('T')[0];
 
-    /**
-     * If the client provides budgetId, it ALWAYS wins.
-     * This is the core of "one file per budget" even if name/date change later.
-     *
-     * If not provided, we fall back to deterministic ID from name+date.
-     */
-    const id = (budgetId && sanitizeIdPart(budgetId)) || buildBudgetIdFromNameDate(safeName, safeDate);
+    // If client provides an ID, always use it (one-file-per-budget)
+    const incomingId = budgetId ? sanitizeIdPart(budgetId) : '';
+    const id = incomingId || buildBudgetIdFromNameDate(safeName, safeDate);
 
     const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
     const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
 
     const nowIso = new Date().toISOString();
 
-    // Preserve createdAt if it already exists
+    // Preserve createdAt if already exists
     let createdAt = nowIso;
     if (await fileExists(metaPath)) {
       try {
         const existing = JSON.parse(await fs.readFile(metaPath, 'utf8'));
         if (existing && existing.createdAt) createdAt = existing.createdAt;
       } catch {
-        // ignore parse errors and recreate metadata
+        // ignore parse errors
       }
     }
 
-    // Write/overwrite CSV
     await fs.writeFile(csvPath, csv, 'utf8');
 
-    // Write/overwrite metadata
     const metadata = {
       id,
       name: safeName,
@@ -154,7 +139,7 @@ app.post('/api/budgets', async (req, res) => {
   }
 });
 
-// DELETE budget
+// delete
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
     await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.csv`));
@@ -165,7 +150,7 @@ app.delete('/api/budgets/:id', async (req, res) => {
   }
 });
 
-// SEARCH budgets
+// search budgets
 app.get('/api/budgets/search', async (req, res) => {
   try {
     const { name, dateFrom, dateTo } = req.query;
@@ -181,7 +166,7 @@ app.get('/api/budgets/search', async (req, res) => {
         const parsed = JSON.parse(content);
         if (parsed && parsed.id) budgets.push(parsed);
       } catch {
-        // skip bad json
+        // skip invalid json
       }
     }
 
