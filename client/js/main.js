@@ -1,4 +1,4 @@
-// main.js - Main application controller
+// client/js/main.js - Main application controller
 
 import { state } from './modules/state.js';
 import { buildChartsPngFileName } from './modules/utils.js';
@@ -15,189 +15,128 @@ import {
 
 import { calculateBudget, updateSummaryDisplay } from './modules/budgetCalculator.js';
 import { updateCharts, downloadChartsPNG } from './modules/charts.js';
+import { updateTextPreview, copyTextPreview, exportTextPreviewTxt } from './modules/textPreview.js';
+
+import { exportCSV, importCSVFromFile } from './modules/csv.js';
 
 import {
-  updateTextPreview,
-  copyTextPreview,
-  exportTextPreviewTxt
-} from './modules/textPreview.js';
+  populateBudgetSelector,
+  loadBudgetFromServer,
+  saveBudgetToServer,
+  deleteBudgetFromServer,
+  clearActiveBudgetId
+} from './modules/serverLoad.js';
 
-import { downloadCSV, setupCSVImport, triggerImport } from './modules/csv.js';
+import { wireUiHandlers } from './uiHandlers.js';
 
-// NEW: server load + selector population
-import { populateBudgetSelector, loadBudgetFromServer } from './modules/serverLoad.js';
-
-// Main budget update function
-export function updateBudget() {
-  const budgetData = calculateBudget();
+/**
+ * Core update loop: read current state, compute budget, refresh UI (summary, charts, preview)
+ */
+function updateBudget() {
+  const budgetData = calculateBudget(state);
 
   updateSummaryDisplay(budgetData);
-  updateTextPreview(budgetData);
 
   updateCharts(
     {
-      Headliners: budgetData.expenses.Headliners,
-      Support: budgetData.expenses.Support,
-      Production: budgetData.expenses.Production,
-      Gear: budgetData.expenses.Gear,
-      Marketing: budgetData.expenses.Marketing,
-      Staff: budgetData.expenses.Staff,
-      Other: budgetData.expenses.Other
+      Headliners: budgetData.expenses?.Headliners || 0,
+      Support: budgetData.expenses?.Support || 0,
+      Production: budgetData.expenses?.Production || 0,
+      Gear: budgetData.expenses?.Gear || 0,
+      Marketing: budgetData.expenses?.Marketing || 0,
+      Staff: budgetData.expenses?.Staff || 0,
+      Other: budgetData.expenses?.Other || 0
     },
-    {
-      Eventbrite: budgetData.revenue.Eventbrite,
-      Presales: budgetData.revenue.Presales,
-      Promo: budgetData.revenue.Promo,
-      Door: budgetData.revenue.Door,
-      "Merch Sold": budgetData.revenue["Merch Sold"],
-      "Merch Vendors": budgetData.revenue["Merch Vendors"]
-    }
+    budgetData.revenue || {}
   );
-}
 
-// Form reset function
-export function resetForm() {
-  const form = document.getElementById("budgetForm");
-  if (form) form.reset();
+  updateTextPreview(budgetData);
 
-  // Reset the budget selector dropdown
-  const budgetSelector = document.getElementById("budgetSelector");
-  if (budgetSelector) {
-    budgetSelector.value = "";
-  }
-
-  const numHeadliners = document.getElementById("numHeadliners");
-  const numLocalDJs = document.getElementById("numLocalDJs");
-  const numCDJs = document.getElementById("numCDJs");
-  const numShowRunners = document.getElementById("numShowRunners");
-  const numOtherCategories = document.getElementById("numOtherCategories");
-  const numMerchVendors = document.getElementById("numMerchVendors");
-
-  if (numHeadliners) numHeadliners.value = 1;
-  if (numLocalDJs) numLocalDJs.value = 0;
-  if (numCDJs) numCDJs.value = 0;
-  if (numShowRunners) numShowRunners.value = 0;
-  if (numOtherCategories) numOtherCategories.value = 0;
-  if (numMerchVendors) numMerchVendors.value = 0;
-
-  state.headliners = {};
-  state.localDJs = {};
-  state.cdjs = {};
-  state.showRunners = {};
-  state.otherCats = {};
-  state.vendors = {};
-
-  const containers = [
-    "headlinerInputs",
-    "localDJInputs",
-    "cdjInputs",
-    "showRunnerInputs",
-    "allOtherCategories",
-    "merchVendorInputs"
-  ];
-
-  containers.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = "";
-  });
-
-  regenerateHeadliners(updateBudget);
-  updateBudget();
-}
-
-// Download all files
-export function downloadAll() {
-  updateBudget();
-  downloadCSV();
-  exportTextPreviewTxt();
-
-  setTimeout(() => {
-    downloadChartsPNG(buildChartsPngFileName());
-  }, 150);
-}
-
-// Collapsible toggle
-export function toggleCollapse(id) {
-  const section = document.getElementById(id);
-  if (!section) return;
-  section.classList.toggle("open");
+  return budgetData;
 }
 
 /**
- * Build the regenerators map used by CSV import and server-loaded CSV.
- * Some code paths may refer to "vendors" vs "merchVendors", so we provide both.
+ * Gather metadata for saving.
+ * Update these selectors to match your actual DOM IDs if different.
  */
-function buildRegenerators() {
+function getBudgetMetadata() {
+  const nameEl = document.getElementById('showTitle') || document.getElementById('showName');
+  const dateEl = document.getElementById('showDate');
+
   return {
+    name: nameEl ? nameEl.value : 'Untitled Budget',
+    date: dateEl ? dateEl.value : new Date().toISOString().split('T')[0]
+  };
+}
+
+/**
+ * Init
+ */
+window.addEventListener('DOMContentLoaded', async () => {
+  // Regenerator hooks used by CSV loader
+  const regenerators = {
     headliners: () => regenerateHeadliners(updateBudget),
     localDJs: () => regenerateLocalDJs(updateBudget),
     cdjs: () => regenerateCDJs(updateBudget),
     showRunners: () => regenerateShowRunners(updateBudget),
-
-    // Merch vendors are handled by the same repeater in this codebase
     vendors: () => regenerateVendors(updateBudget),
-    merchVendors: () => regenerateVendors(updateBudget),
-
     otherCategories: () => regenerateOtherCategories(updateBudget),
     otherItems: (c) => regenerateOtherItems(c, updateBudget)
   };
-}
 
-// CRITICAL: Make ALL functions globally available for HTML onclick handlers
-// Without these, buttons won't work!
-window.updateBudget = updateBudget;
-window.resetForm = resetForm;
-window.downloadCSV = downloadCSV;
-window.triggerImport = triggerImport;
-window.downloadAll = downloadAll;
-window.toggleCollapse = toggleCollapse;
-window.copyTextPreview = copyTextPreview;
-window.exportTextPreviewTxt = exportTextPreviewTxt;
-window.downloadChartsPNG = () => downloadChartsPNG(buildChartsPngFileName());
-
-// Make regenerate functions global for HTML onchange handlers
-window.regenerateHeadliners = () => regenerateHeadliners(updateBudget);
-window.regenerateLocalDJs = () => regenerateLocalDJs(updateBudget);
-window.regenerateCDJs = () => regenerateCDJs(updateBudget);
-window.regenerateShowRunners = () => regenerateShowRunners(updateBudget);
-window.regenerateVendors = () => regenerateVendors(updateBudget);
-window.regenerateOtherCategories = () => regenerateOtherCategories(updateBudget);
-window.regenerateOtherItems = (catId) => regenerateOtherItems(catId, updateBudget);
-
-// NEW: this is what your <select onchange="handleBudgetSelection(this.value)"> needs
-window.handleBudgetSelection = async (budgetId) => {
-  if (!budgetId) return;
-
-  try {
-    const regenerators = buildRegenerators();
-    await loadBudgetFromServer(budgetId, regenerators, updateBudget);
-  } catch (err) {
-    console.error('Failed to load selected budget:', err);
-  }
-};
-
-// Initialize on DOM ready
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log('🚀 Budget App Initializing...');
-
-  // Verify functions are accessible
-  console.log('✅ updateBudget available:', typeof window.updateBudget === 'function');
-  console.log('✅ regenerateHeadliners available:', typeof window.regenerateHeadliners === 'function');
-  console.log('✅ handleBudgetSelection available:', typeof window.handleBudgetSelection === 'function');
-
-  // Populate the "Load Previous Budget" selector
-  try {
-    await populateBudgetSelector("budgetSelector");
-  } catch (e) {
-    console.error("Failed to populate budget selector:", e);
-  }
-
-  // Setup CSV import handler
-  setupCSVImport(buildRegenerators(), updateBudget);
-
-  // Initialize with one headliner
+  // Ensure at least one headliner row exists on first load
   regenerateHeadliners(updateBudget);
+
+  // Initial render
   updateBudget();
 
-  console.log('✅ Budget App Ready!');
+  // Populate saved budgets selector from server
+  try {
+    await populateBudgetSelector('budgetSelector');
+  } catch {
+    // populateBudgetSelector already alerts on failure
+  }
+
+  // Wire UI events
+  wireUiHandlers({
+    state,
+    updateBudget,
+
+    // CSV
+    exportCSV: () => exportCSV(state),
+    importCSVFromFile: (file) => importCSVFromFile(file, regenerators, updateBudget),
+
+    // Preview
+    copyTextPreview,
+    exportTextPreviewTxt,
+
+    // Charts export
+    downloadChartsPNG: () => downloadChartsPNG(buildChartsPngFileName(getBudgetMetadata())),
+
+    // Server save/load
+    saveToServer: async () => {
+      const csvData = exportCSV(state);
+      const metadata = getBudgetMetadata();
+      const result = await saveBudgetToServer(csvData, metadata);
+
+      // Refresh selector list so updatedAt reflects
+      await populateBudgetSelector('budgetSelector');
+      return result;
+    },
+
+    loadFromServer: async (budgetId) => {
+      await loadBudgetFromServer(budgetId, regenerators, updateBudget);
+      updateBudget();
+    },
+
+    deleteFromServer: async (budgetId) => {
+      await deleteBudgetFromServer(budgetId);
+      await populateBudgetSelector('budgetSelector');
+    },
+
+    newBudget: () => {
+      // optional: clear active budget ID so next save creates a new budget
+      clearActiveBudgetId();
+    }
+  });
 });
