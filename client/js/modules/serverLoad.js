@@ -3,29 +3,52 @@ import { loadCSV } from './csv.js';
 
 /**
  * Resolve backend base URL:
- * - If frontend is served by backend (port 3000): same origin
- * - If frontend is served separately (port != 3000): use same host with :3000
+ * - If on Railway/production: use current origin (Railway serves frontend + backend together)
+ * - If on localhost with different port: use localhost:3000
  * - If opened via file://: use localhost:3000
  */
 function resolveApiBase() {
   try {
     const { protocol, hostname, port, origin } = window.location;
 
+    // If opened as file:// protocol
     if (protocol === 'file:' || origin === 'null') {
       return 'http://localhost:3000';
     }
 
-    if (port && port !== '3000') {
-      return `http://${hostname}:3000`;
+    // If on Railway (production domain)
+    // Railway domains end in .railway.app, .up.railway.app, or custom domains
+    if (hostname.includes('railway.app') || hostname.includes('.app') || 
+        (!hostname.includes('localhost') && !hostname.includes('127.0.0.1'))) {
+      // On Railway, frontend and backend are served together, use same origin
+      console.log('🚂 Detected Railway deployment, using origin:', origin);
+      return origin;
     }
 
+    // If on localhost
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // If already on port 3000, use origin
+      if (port === '3000' || port === '') {
+        console.log('🏠 Using localhost origin:', origin);
+        return origin;
+      }
+      // If on different port (e.g., live server on 5500), connect to backend on 3000
+      console.log('🏠 Using localhost:3000 for API');
+      return 'http://localhost:3000';
+    }
+
+    // Default: use current origin
+    console.log('🌐 Using current origin:', origin);
     return origin;
-  } catch {
+    
+  } catch (err) {
+    console.error('Error resolving API base:', err);
     return 'http://localhost:3000';
   }
 }
 
 const API_BASE = resolveApiBase();
+console.log('📡 API Base URL:', API_BASE);
 
 export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetFn) {
   const statusEl = document.getElementById('loadStatus');
@@ -101,7 +124,9 @@ export async function populateBudgetSelector(selectId) {
 
 export async function saveBudgetToServer(csvData, metadata = {}) {
   try {
-    // IMPORTANT: NO budgetId here — server will compute id from name+date.
+    console.log('💾 Saving to:', API_BASE);
+    
+    // IMPORTANT: NO budgetId here – server will compute id from name+date.
     const payload = {
       csv: csvData,
       name: metadata.name || 'Untitled Budget',
@@ -124,7 +149,9 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
       throw new Error(`Failed to save budget: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('✅ Save successful:', result);
+    return result;
   } catch (error) {
     console.error('Error saving budget to server:', error);
     throw error;
