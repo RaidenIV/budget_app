@@ -7,7 +7,23 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '..')));
+
+/**
+ * FRONTEND DIRECTORY
+ * Fixes "Cannot GET /" by serving your budget app HTML/CSS/JS.
+ * Default assumes your frontend lives one folder ABOVE server.js.
+ *
+ * Optional overrides:
+ *   FRONTEND_DIR=/absolute/path/to/frontend INDEX_FILE=budget.html node server.js
+ */
+const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(__dirname, '..');
+const INDEX_FILE = process.env.INDEX_FILE || 'index.html';
+
+app.use(express.static(FRONTEND_DIR));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, INDEX_FILE));
+});
 
 const BUDGETS_DIR = path.join(__dirname, 'budgets');
 fs.mkdir(BUDGETS_DIR, { recursive: true });
@@ -40,25 +56,25 @@ async function fileExists(p) {
 
 // ---------- routes ----------
 
-// list budgets
+// GET all budgets
 app.get('/api/budgets', async (req, res) => {
   try {
     const files = await fs.readdir(BUDGETS_DIR);
     const budgets = await Promise.all(
       files
         .filter(f => f.endsWith('.json'))
-        .map(async f => {
-          const content = await fs.readFile(path.join(BUDGETS_DIR, f), 'utf8');
+        .map(async (file) => {
+          const content = await fs.readFile(path.join(BUDGETS_DIR, file), 'utf8');
           return JSON.parse(content);
         })
     );
     res.json(budgets);
-  } catch {
+  } catch (error) {
     res.status(500).json({ error: 'Failed to fetch budgets' });
   }
 });
 
-// load csv
+// GET specific budget (csv)
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     const csv = await fs.readFile(
@@ -66,12 +82,12 @@ app.get('/api/budgets/:id', async (req, res) => {
       'utf8'
     );
     res.type('text/csv').send(csv);
-  } catch {
+  } catch (error) {
     res.status(404).json({ error: 'Budget not found' });
   }
 });
 
-// save (UPSERT)
+// POST upsert budget (one file per budget)
 app.post('/api/budgets', async (req, res) => {
   try {
     const { csv, name, date } = req.body;
@@ -79,17 +95,23 @@ app.post('/api/budgets', async (req, res) => {
     const safeName = name || 'Untitled Budget';
     const safeDate = date || new Date().toISOString().split('T')[0];
 
+    // Stable ID per budget
     const id = buildBudgetId(safeName, safeDate);
 
     const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
     const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
 
-    const now = new Date().toISOString();
-    let createdAt = now;
+    const nowIso = new Date().toISOString();
 
+    // Preserve createdAt if it already exists
+    let createdAt = nowIso;
     if (await fileExists(metaPath)) {
-      const existing = JSON.parse(await fs.readFile(metaPath, 'utf8'));
-      if (existing.createdAt) createdAt = existing.createdAt;
+      try {
+        const existing = JSON.parse(await fs.readFile(metaPath, 'utf8'));
+        if (existing && existing.createdAt) createdAt = existing.createdAt;
+      } catch {
+        // ignore parse errors and recreate metadata
+      }
     }
 
     await fs.writeFile(csvPath, csv, 'utf8');
@@ -99,29 +121,29 @@ app.post('/api/budgets', async (req, res) => {
       name: safeName,
       date: safeDate,
       createdAt,
-      updatedAt: now
+      updatedAt: nowIso
     };
 
     await fs.writeFile(metaPath, JSON.stringify(metadata, null, 2), 'utf8');
 
-    res.json({ id, message: 'Budget saved (overwritten if existing)' });
-  } catch {
+    res.json({ id, message: 'Budget saved successfully (upsert)' });
+  } catch (error) {
     res.status(500).json({ error: 'Failed to save budget' });
   }
 });
 
-// delete
+// DELETE budget
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
     await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.csv`));
     await fs.unlink(path.join(BUDGETS_DIR, `${req.params.id}.json`));
-    res.json({ message: 'Budget deleted' });
-  } catch {
+    res.json({ message: 'Budget deleted successfully' });
+  } catch (error) {
     res.status(500).json({ error: 'Failed to delete budget' });
   }
 });
 
-// search
+// SEARCH budgets
 app.get('/api/budgets/search', async (req, res) => {
   try {
     const { name, dateFrom, dateTo } = req.query;
@@ -130,22 +152,23 @@ app.get('/api/budgets/search', async (req, res) => {
     let budgets = await Promise.all(
       files
         .filter(f => f.endsWith('.json'))
-        .map(async f => {
-          const content = await fs.readFile(path.join(BUDGETS_DIR, f), 'utf8');
+        .map(async (file) => {
+          const content = await fs.readFile(path.join(BUDGETS_DIR, file), 'utf8');
           return JSON.parse(content);
         })
     );
 
     if (name) {
       budgets = budgets.filter(b =>
-        b.name.toLowerCase().includes(name.toLowerCase())
+        (b.name || '').toLowerCase().includes(String(name).toLowerCase())
       );
     }
+
     if (dateFrom) budgets = budgets.filter(b => b.date >= dateFrom);
     if (dateTo) budgets = budgets.filter(b => b.date <= dateTo);
 
     res.json(budgets);
-  } catch {
+  } catch (error) {
     res.status(500).json({ error: 'Search failed' });
   }
 });
@@ -153,4 +176,6 @@ app.get('/api/budgets/search', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Serving frontend from: ${FRONTEND_DIR}`);
+  console.log(`Index file: ${INDEX_FILE}`);
 });
