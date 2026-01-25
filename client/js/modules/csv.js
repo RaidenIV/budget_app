@@ -23,6 +23,24 @@ const EXCLUDE_IDS = new Set([
   "loadStatus",
 ]);
 
+// NEW: extra scopes/fields to ensure Direct Support details are captured
+const EXTRA_SCOPE_IDS = [
+  // Most-likely containers (safe even if they don't exist)
+  "directSupportCard",
+  "directSupportSection",
+  "directSupportInputs",
+  "directSupportDetails",
+  "supportSection",
+  "supportInputs",
+];
+
+// NEW: if you used these IDs (or similar), they’ll be force-included even if outside the form
+const DIRECT_SUPPORT_FIELD_IDS = [
+  "directSupportName",
+  "directSupportHotel",
+  "directSupportRider",
+];
+
 let fileInputEl = null;
 
 function csvEscape(v) {
@@ -121,6 +139,85 @@ function ensureFileInput() {
   return fileInputEl;
 }
 
+function isFormValueElement(el) {
+  if (!el || !el.id) return false;
+  if (EXCLUDE_IDS.has(el.id)) return false;
+
+  const tag = el.tagName?.toLowerCase?.() || "";
+  if (!tag) return false;
+
+  if (tag === "input") {
+    const type = (el.getAttribute("type") || "").toLowerCase();
+    if (type === "button" || type === "submit" || type === "reset") return false;
+    if (type === "file") return false;
+  }
+
+  // Avoid duplicating showTitle/showDate as ID: rows
+  if (el.id === "showTitle" || el.id === "showDate") return false;
+
+  return tag === "input" || tag === "select" || tag === "textarea";
+}
+
+function getElementValue(el) {
+  const tag = el.tagName.toLowerCase();
+
+  if (tag === "input") {
+    const type = (el.getAttribute("type") || "").toLowerCase();
+    if (type === "checkbox") return el.checked ? "1" : "0";
+    if (type === "radio") {
+      if (!el.checked) return null; // skip unchecked radios
+      return el.value ?? "";
+    }
+    return el.value ?? "";
+  }
+
+  if (tag === "select" || tag === "textarea") return el.value ?? "";
+
+  return "";
+}
+
+function collectExportElements() {
+  const seen = new Set();
+  const out = [];
+
+  const add = (el) => {
+    if (!isFormValueElement(el)) return;
+    if (seen.has(el.id)) return;
+    seen.add(el.id);
+    out.push(el);
+  };
+
+  const form =
+    document.getElementById("budgetForm") ||
+    document.querySelector("form") ||
+    null;
+
+  const scopes = [];
+  if (form) scopes.push(form);
+
+  // Add any known extra containers (Direct Support commonly ends up outside the form)
+  for (const scopeId of EXTRA_SCOPE_IDS) {
+    const n = document.getElementById(scopeId);
+    if (n) scopes.push(n);
+  }
+
+  // If for some reason we didn't find any scopes, fallback to body
+  if (scopes.length === 0) scopes.push(document.body);
+
+  // Collect from scopes
+  for (const scope of scopes) {
+    const els = scope.querySelectorAll?.("input, select, textarea") || [];
+    for (const el of els) add(el);
+  }
+
+  // Force-include known Direct Support IDs even if outside all scopes
+  for (const id of DIRECT_SUPPORT_FIELD_IDS) {
+    add(document.getElementById(id));
+  }
+
+  return out;
+}
+
 export function buildCSVString() {
   const lines = [];
   lines.push(`XODIA_BUDGET_VERSION,${CSV_VERSION}`);
@@ -131,44 +228,13 @@ export function buildCSVString() {
   lines.push(`Show Title,${csvEscape(showTitle)}`);
   lines.push(`Show Date,${csvEscape(showDate)}`);
 
-  const form =
-    document.getElementById("budgetForm") ||
-    document.querySelector("form") ||
-    document.body;
-
-  const els = form.querySelectorAll("input, select, textarea");
+  const els = collectExportElements();
 
   for (const el of els) {
-    if (!el || !el.id) continue;
-    if (EXCLUDE_IDS.has(el.id)) continue;
-
-    if (el.tagName.toLowerCase() === "input") {
-      const type = (el.getAttribute("type") || "").toLowerCase();
-      if (type === "button" || type === "submit" || type === "reset") continue;
-      if (type === "file") continue;
-    }
-
-    // Avoid duplicating showTitle/showDate as ID: rows
-    if (el.id === "showTitle" || el.id === "showDate") continue;
-
-    let val = "";
-    const tag = el.tagName.toLowerCase();
-
-    if (tag === "input") {
-      const type = (el.getAttribute("type") || "").toLowerCase();
-      if (type === "checkbox") {
-        val = el.checked ? "1" : "0";
-      } else if (type === "radio") {
-        if (!el.checked) continue;
-        val = el.value ?? "";
-      } else {
-        val = el.value ?? "";
-      }
-    } else if (tag === "select" || tag === "textarea") {
-      val = el.value ?? "";
-    }
-
-    lines.push(`ID:${el.id},${csvEscape(val)}`);
+    // radios: only export checked
+    const v = getElementValue(el);
+    if (v === null) continue;
+    lines.push(`ID:${el.id},${csvEscape(v)}`);
   }
 
   return lines.join("\n") + "\n";
