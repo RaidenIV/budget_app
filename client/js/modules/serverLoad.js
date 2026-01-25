@@ -14,13 +14,15 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
   const statusEl = document.getElementById('loadStatus');
   
   try {
-    if (statusEl) statusEl.textContent = 'Loading budget...';
+    if (statusEl) statusEl.textContent = "Loading budget...";
     
-    console.log('Fetching budget:', budgetId);
+    console.log('Loading budget with ID:', budgetId);
     const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`);
     
     if (!response.ok) {
-      throw new Error(`Failed to load budget: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
     }
     
     const csvText = await response.text();
@@ -38,33 +40,35 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
       throw new Error('Received empty data from server');
     }
     
-    console.log('Calling loadCSV with regenerators:', Object.keys(regenerators));
+    // Use the existing loadCSV function to parse and load the data
+    console.log('Calling loadCSV with data...');
+    await loadCSV(csvText, regenerators, updateBudgetFn);
     
-    loadCSV(csvText, regenerators, updateBudgetFn);
-    
-    console.log('loadCSV completed');
-    
-    if (statusEl) {
-      statusEl.textContent = 'Budget loaded successfully!';
-      setTimeout(() => statusEl.textContent = '', 3000);
-    }
+    if (statusEl) statusEl.textContent = "Budget loaded successfully!";
+    return true;
     
   } catch (error) {
     console.error('Error loading budget:', error);
     if (statusEl) statusEl.textContent = `Error: ${error.message}`;
     alert(`Failed to load budget: ${error.message}`);
+    throw error;
   }
 }
 
 export async function fetchBudgetList() {
   try {
+    console.log('Fetching budget list from:', `${API_BASE}/api/budgets`);
     const response = await fetch(`${API_BASE}/api/budgets`);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch budget list: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
     }
     
-    return await response.json();
+    const budgets = await response.json();
+    console.log('Received budget list:', budgets);
+    return budgets;
     
   } catch (error) {
     console.error('Error fetching budget list:', error);
@@ -89,27 +93,36 @@ export async function populateBudgetSelector(selectId) {
     // Sort newest first
     budgets.sort((a, b) => getTs(b) - getTs(a));
 
+    // Dedupe: keep only the latest budget for each (name + show date) pair.
+    // Since budgets is sorted newest-first, the first occurrence of each key is the latest.
+    const norm = (s) => String(s ?? '').trim().toLowerCase();
+    const seen = new Set();
+    const latestBudgets = budgets.filter((b) => {
+      const nameKey = norm(b?.name ?? 'Untitled Budget');
+      const dateKey = norm(b?.date ?? '');
+      const key = `${nameKey}__${dateKey}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // Keep the placeholder option at index 0; clear everything else
     select.length = 1;
 
-    budgets.forEach((budget) => {
+    latestBudgets.forEach((budget) => {
       const id = budget?.id ?? budget?._id ?? budget?.budgetId;
       if (!id) return; // cannot load without a stable id
+
+      const option = document.createElement("option");
+      option.value = id;
 
       const name = budget?.name ?? "Untitled Budget";
       const date = budget?.date ?? "";
 
-      const option = document.createElement("option");
-      option.value = String(id);
-
-      // Store raw fields for any other code that needs them (do NOT parse the label)
-      option.dataset.name = name;
-      option.dataset.date = date;
-      option.dataset.createdAt = budget?.createdAt ?? "";
-
-      const savedDate = new Date(option.dataset.createdAt);
-      const timeStr = Number.isFinite(savedDate.getTime())
-        ? savedDate.toLocaleString("en-US", {
+      // Format timestamp as human-readable (use parsed time)
+      const ts = getTs(budget);
+      const timeStr = ts
+        ? new Date(ts).toLocaleString(undefined, {
             month: "short",
             day: "numeric",
             year: "numeric",
@@ -139,38 +152,24 @@ export async function saveBudgetToServer(csvData, metadata = {}) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        csv: csvData,
-        name: metadata.name || 'Untitled Budget',
-        date: metadata.date || new Date().toISOString().split('T')[0],
-        ...metadata
+        csvData,
+        metadata
       })
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to save budget: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
     }
     
-    return await response.json();
+    const result = await response.json();
+    console.log('Budget saved:', result);
+    return result;
     
   } catch (error) {
-    console.error('Error saving budget to server:', error);
-    throw error;
-  }
-}
-
-export async function searchBudgets(criteria) {
-  try {
-    const params = new URLSearchParams(criteria);
-    const response = await fetch(`${API_BASE}/api/budgets/search?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.statusText}`);
-    }
-    
-    return await response.json();
-    
-  } catch (error) {
-    console.error('Error searching budgets:', error);
+    console.error('Error saving budget:', error);
+    alert(`Failed to save budget: ${error.message}`);
     throw error;
   }
 }
@@ -182,10 +181,14 @@ export async function deleteBudgetFromServer(budgetId) {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to delete budget: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
     }
     
-    return await response.json();
+    const result = await response.json();
+    console.log('Budget deleted:', result);
+    return result;
     
   } catch (error) {
     console.error('Error deleting budget:', error);
