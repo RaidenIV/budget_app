@@ -22,14 +22,10 @@ import {
   exportTextPreviewTxt
 } from './modules/textPreview.js';
 
-import { buildCSVString, downloadCSV, setupCSVImport, triggerImport } from './modules/csv.js';
+import { downloadCSV, setupCSVImport, triggerImport } from './modules/csv.js';
 
-// Server load/save functions
-import { 
-  populateBudgetSelector, 
-  loadBudgetFromServer,
-  saveBudgetToServer 
-} from './modules/serverLoad.js';
+// NEW: server load + selector population
+import { populateBudgetSelector, loadBudgetFromServer } from './modules/serverLoad.js';
 
 // Main budget update function
 export function updateBudget() {
@@ -129,6 +125,7 @@ export function toggleCollapse(id) {
 
 /**
  * Build the regenerators map used by CSV import and server-loaded CSV.
+ * Some code paths may refer to "vendors" vs "merchVendors", so we provide both.
  */
 function buildRegenerators() {
   return {
@@ -136,88 +133,18 @@ function buildRegenerators() {
     localDJs: () => regenerateLocalDJs(updateBudget),
     cdjs: () => regenerateCDJs(updateBudget),
     showRunners: () => regenerateShowRunners(updateBudget),
+
+    // Merch vendors are handled by the same repeater in this codebase
     vendors: () => regenerateVendors(updateBudget),
     merchVendors: () => regenerateVendors(updateBudget),
+
     otherCategories: () => regenerateOtherCategories(updateBudget),
     otherItems: (c) => regenerateOtherItems(c, updateBudget)
   };
 }
 
-/**
- * Helper to get current show metadata
- */
-function getShowMetadata() {
-  const name = (document.getElementById('showTitle')?.value || '').trim() || 'Untitled Budget';
-  const date = (document.getElementById('showDate')?.value || '').trim() || new Date().toISOString().slice(0, 10);
-  return { name, date };
-}
-
-/**
- * Save budget to server - CRITICAL HANDLER
- */
-async function handleSaveBudgetToServerImpl() {
-  const statusEl = document.getElementById('loadStatus');
-  
-  try {
-    if (statusEl) statusEl.textContent = 'Saving budget...';
-    
-    const csvData = buildCSVString();
-    const metadata = getShowMetadata();
-    
-    console.log('Saving budget:', metadata);
-    const result = await saveBudgetToServer(csvData, metadata);
-    
-    console.log('Save result:', result);
-    
-    if (statusEl) {
-      statusEl.textContent = 'Budget saved successfully!';
-      setTimeout(() => (statusEl.textContent = ''), 3000);
-    }
-    
-    // Refresh the budget selector to show the newly saved budget
-    await populateBudgetSelector('budgetSelector');
-    
-  } catch (error) {
-    console.error('Save error:', error);
-    if (statusEl) {
-      statusEl.textContent = `Error: ${error.message}`;
-    }
-    alert(`Failed to save budget: ${error.message}`);
-  }
-}
-
-/**
- * Load selected budget from server - CRITICAL HANDLER
- */
-async function handleLoadSelectedBudgetImpl() {
-  const select = document.getElementById('budgetSelector');
-  const budgetId = select?.value;
-  
-  if (!budgetId) {
-    alert('Please select a budget to load');
-    return;
-  }
-  
-  try {
-    const regenerators = buildRegenerators();
-    await loadBudgetFromServer(budgetId, regenerators, updateBudget);
-  } catch (error) {
-    console.error('Load error:', error);
-    alert(`Failed to load budget: ${error.message}`);
-  }
-}
-
-/**
- * Handle budget selection change
- */
-async function handleBudgetSelectionImpl(budgetId) {
-  if (!budgetId) return;
-  // Optional: auto-load on selection
-  // Uncomment the next line if you want budgets to load automatically when selected
-  // await handleLoadSelectedBudgetImpl();
-}
-
 // CRITICAL: Make ALL functions globally available for HTML onclick handlers
+// Without these, buttons won't work!
 window.updateBudget = updateBudget;
 window.resetForm = resetForm;
 window.downloadCSV = downloadCSV;
@@ -237,39 +164,32 @@ window.regenerateVendors = () => regenerateVendors(updateBudget);
 window.regenerateOtherCategories = () => regenerateOtherCategories(updateBudget);
 window.regenerateOtherItems = (catId) => regenerateOtherItems(catId, updateBudget);
 
-// CRITICAL: Server load/save handlers (THESE WERE MISSING!)
-window.handleSaveBudgetToServer = () => handleSaveBudgetToServerImpl().catch(err => {
-  console.error('handleSaveBudgetToServer error:', err);
-  alert(`Save failed: ${err.message}`);
-});
+// NEW: this is what your <select onchange="handleBudgetSelection(this.value)"> needs
+window.handleBudgetSelection = async (budgetId) => {
+  if (!budgetId) return;
 
-window.handleLoadSelectedBudget = () => handleLoadSelectedBudgetImpl().catch(err => {
-  console.error('handleLoadSelectedBudget error:', err);
-  alert(`Load failed: ${err.message}`);
-});
-
-window.handleBudgetSelection = (budgetId) => handleBudgetSelectionImpl(budgetId).catch(err => {
-  console.error('handleBudgetSelection error:', err);
-});
+  try {
+    const regenerators = buildRegenerators();
+    await loadBudgetFromServer(budgetId, regenerators, updateBudget);
+  } catch (err) {
+    console.error('Failed to load selected budget:', err);
+  }
+};
 
 // Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", async () => {
   console.log('🚀 Budget App Initializing...');
 
-  // Verify critical functions are accessible
-  console.log('✅ updateBudget:', typeof window.updateBudget === 'function');
-  console.log('✅ handleSaveBudgetToServer:', typeof window.handleSaveBudgetToServer === 'function');
-  console.log('✅ handleLoadSelectedBudget:', typeof window.handleLoadSelectedBudget === 'function');
-  console.log('✅ handleBudgetSelection:', typeof window.handleBudgetSelection === 'function');
+  // Verify functions are accessible
+  console.log('✅ updateBudget available:', typeof window.updateBudget === 'function');
+  console.log('✅ regenerateHeadliners available:', typeof window.regenerateHeadliners === 'function');
+  console.log('✅ handleBudgetSelection available:', typeof window.handleBudgetSelection === 'function');
 
-  // Populate the budget selector dropdown
+  // Populate the "Load Previous Budget" selector
   try {
-    console.log('Populating budget selector...');
     await populateBudgetSelector("budgetSelector");
-    console.log('✅ Budget selector populated');
   } catch (e) {
-    console.error("❌ Failed to populate budget selector:", e);
-    console.error("This usually means the server isn't running or the API URL is wrong");
+    console.error("Failed to populate budget selector:", e);
   }
 
   // Setup CSV import handler
