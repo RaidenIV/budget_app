@@ -768,3 +768,13 @@ button.danger:hover{
 .main-container > * > :last-child {
     margin-bottom: 0 !important;
 }
+
+/* ----------------------------------------------------------
+   SPACING FIX: add gap between Show Date (and other fields)
+   and the next collapsible block (e.g., Headliners)
+---------------------------------------------------------- */
+form input + .collapsible,
+form select + .collapsible,
+form .quantity-row + .collapsible {
+    margin-top: var(--card-gap);
+}
