@@ -1,254 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Budget Tool</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XODIA Budget Tool</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-<!-- NAVIGATION MENU -->
-<div class="nav-dropdown" id="navDropdown">
-  <button class="nav-toggle" id="navToggle">menu</button>
-  <div class="nav-menu" id="navMenu">
-    <a href="https://www.xodiamediagroup.com/home">Home</a>
-    <a href="https://www.xodiamediagroup.com/event-tools">Event Tools</a>
-    <a href="https://www.xodiamediagroup.com/contact">Contact</a>
-  </div>
-</div>
-
-<div class="page-wrapper">
-  <h1>Budget Tool</h1>
-
-  <div class="main-container">
-
-    <!-- LEFT COLUMN: FORM -->
-    <div class="form-panel">
-      <form id="budgetForm">
-
-        <label>Show Title:</label>
-        <input id="showTitle" type="text" placeholder="Enter show name" oninput="updateBudget()">
-
-        <label>Show Date:</label>
-        <input id="showDate" type="date" oninput="updateBudget()">
-
-        <!-- SERVER LOAD SECTION -->
-        <div class="server-load-section">
-            <h3>Load/Save Budget</h3>
-            
-            <label for="budgetSelector">Select Budget:</label>
-            <select id="budgetSelector" onchange="handleBudgetSelection(this.value)">
-                <option value="">-- Choose a budget --</option>
-            </select>
-            
-            <div class="load-save-row">
-              <button type="button" class="danger" onclick="handleSaveBudgetToServer()">Save</button>
-            </div>
-            
-            <span id="loadStatus" class="load-status"></span>
+    <!-- NAVIGATION MENU -->
+    <div class="nav-dropdown" id="navDropdown">
+        <button class="nav-toggle" id="navToggle">menu</button>
+        <div class="nav-menu" id="navMenu">
+            <a href="https://www.xodiamediagroup.com/home">Home</a>
+            <a href="https://www.xodiamediagroup.com/event-tools">Event Tools</a>
+            <a href="https://www.xodiamediagroup.com/contact">Contact</a>
         </div>
-
-        <!-- TEXT BUDGET PREVIEW -->
-        <div id="textPreview"></div>
-        <div class="text-preview-actions">
-            <button type="button" onclick="copyTextPreview()">Copy</button>
-            <button type="button" class="danger" onclick="resetAll()">Reset</button>
-            <span id="copyStatus" class="copy-status"></span>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: HEADLINERS
-        -------------------------- -->
-        <div class="collapsible" id="col_headliners">
-            <div class="collapsible-header" onclick="toggleCollapse('col_headliners')">
-            <span class="arrow">▸</span> Headliners
-            </div>
-            <div class="collapsible-content">
-            <div class="quantity-row">
-                <label>Number of Headliners:</label>
-                <input id="numHeadliners" type="number" min="0" max="10" value="0"
-                    onchange="regenerateHeadliners()">
-            </div>
-            <div id="headlinerInputs"></div>
-            </div>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: DIRECT SUPPORT
-        -------------------------- -->
-        <div class="collapsible" id="col_support">
-          <div class="collapsible-header" onclick="toggleCollapse('col_support')">
-            <span class="arrow">▸</span> Direct Support
-          </div>
-          <div class="collapsible-content">
-
-            <div class="headliner-card">
-              <h3>Direct Support</h3>
-
-              <label>Name:</label>
-              <input id="directSupportName" type="text" placeholder="Direct support name" oninput="updateBudget()">
-
-              <label>Fee:</label>
-              <input id="directSupport" type="number" min="0" value="0" oninput="updateBudget()">
-
-              <label>Hotel:</label>
-              <input id="directSupportHotel" type="text" placeholder="Hotel details" oninput="updateBudget()">
-
-              <label>Rider:</label>
-              <input id="directSupportRider" type="text" placeholder="Rider details" oninput="updateBudget()">
-            </div>
-
-          </div>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: LOCAL DJS
-        -------------------------- -->
-        <div class="collapsible" id="col_localdjs">
-            <div class="collapsible-header" onclick="toggleCollapse('col_localdjs')">
-            <span class="arrow">▸</span> Local DJs
-            </div>
-            <div class="collapsible-content">
-            <div class="quantity-row">
-                <label>Number of Local DJs:</label>
-                <input id="numLocalDJs" type="number" min="0" max="20" value="0"
-                    onchange="regenerateLocalDJs()">
-            </div>
-            <div id="localDJInputs"></div>
-            </div>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: CDJS
-        -------------------------- -->
-        <div class="collapsible" id="col_cdjs">
-            <div class="collapsible-header" onclick="toggleCollapse('col_cdjs')">
-            <span class="arrow">▸</span> CDJs / Sound
-            </div>
-            <div class="collapsible-content">
-            <div class="quantity-row">
-                <label>Number of CDJ Rentals:</label>
-                <input id="numCDJs" type="number" min="0" max="20" value="0"
-                    onchange="regenerateCDJs()">
-            </div>
-            <div id="cdjInputs"></div>
-            </div>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: SHOW RUNNERS
-        -------------------------- -->
-        <div class="collapsible" id="col_showrunners">
-            <div class="collapsible-header" onclick="toggleCollapse('col_showrunners')">
-            <span class="arrow">▸</span> Show Runners
-            </div>
-            <div class="collapsible-content">
-            <div class="quantity-row">
-                <label>Number of Show Runners:</label>
-                <input id="numShowRunners" type="number" min="0" max="20" value="0"
-                    onchange="regenerateShowRunners()">
-            </div>
-            <div id="showRunnerInputs"></div>
-            </div>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: MERCH VENDORS
-        -------------------------- -->
-        <div class="collapsible" id="col_merchvendors">
-          <div class="collapsible-header" onclick="toggleCollapse('col_merchvendors')">
-            <span class="arrow">▸</span> Merch Vendors
-          </div>
-          <div class="collapsible-content">
-            <div class="quantity-row">
-              <label>Number of Merch Vendors:</label>
-              <input id="numMerchVendors" type="number" min="0" max="20" value="0"
-                     onchange="regenerateMerchVendors()">
-            </div>
-            <div id="merchVendorInputs"></div>
-          </div>
-        </div>
-
-        <!-- -------------------------
-            COLLAPSIBLE: OTHER CATEGORIES
-        -------------------------- -->
-        <div class="collapsible" id="col_othercats">
-            <div class="collapsible-header" onclick="toggleCollapse('col_othercats')">
-            <span class="arrow">▸</span> Other Categories
-            </div>
-            <div class="collapsible-content">
-            <div class="quantity-row">
-                <label>How many Other sections?</label>
-                <input id="numOtherCategories" type="number" min="0" max="20" value="0"
-                    onchange="regenerateOtherCategories()">
-            </div>
-            <div id="otherCategories"></div>
-            </div>
-        </div>
-
-      </form>
     </div>
 
-    <!-- MIDDLE COLUMN: SUMMARY -->
-    <div class="preview-panel">
-      <div id="summary">
-        <div class="summary-title">SUMMARY</div>
-        <p id="totalCost">$0</p>
-      </div>
-    </div>
+    <div class="page-wrapper">
+        <h1>BUDGET TOOL</h1>
 
-    <!-- RIGHT COLUMN: CHARTS -->
-    <div class="chart-panel">
-      <div class="charts-section">
-        <div class="charts-title" id="chartsEventTitle">Event</div>
+        <div class="main-container">
 
-        <div class="charts-grid">
-          <div class="chart-card">
-            <div class="chart-subtitle">Costs</div>
-            <div class="chart-canvas-wrap">
-              <canvas id="costChart"></canvas>
+            <!-- LEFT COLUMN: FORM -->
+            <div class="form-panel">
+
+                <form id="budgetForm">
+
+                    <!-- EVENT TITLE / DATE -->
+                    <label>Show Title:</label>
+                    <input id="showTitle" type="text" placeholder="Enter show name" oninput="updateBudget()">
+
+                    <label>Show Date:</label>
+                    <input id="showDate" type="date" oninput="updateBudget()">
+
+                    <!-- SUMMARY CARD (top left) -->
+                    <div class="summary-card">
+                        <h3>Summary</h3>
+                        <p>Total Expenses: $<span id="totalExpenses">0</span></p>
+                        <p>Ticketing Sales: $<span id="totalRevenue">0</span></p>
+                        <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
+                    </div>
+
+                    <!-- SERVER LOAD SECTION -->
+                    <div class="server-load-section">
+                        <h3>Load/Save Budget</h3>
+
+                        <label for="budgetSelector">Select Budget:</label>
+                        <select id="budgetSelector" onchange="handleBudgetSelection(this.value)">
+                            <option value="">-- Choose a budget --</option>
+                        </select>
+
+                        <div class="load-save-row">
+                          <button type="button" class="danger" onclick="handleSaveBudgetToServer()">Save</button>
+                        </div>
+
+                        <span id="loadStatus" class="load-status"></span>
+                    </div>
+
+                    <!-- TEXT BUDGET PREVIEW -->
+                    <div id="textPreview"></div>
+                    <div class="text-preview-actions">
+                        <button type="button" onclick="copyTextPreview()">Copy</button>
+                        <button type="button" class="danger" onclick="resetAll()">Reset</button>
+                        <span id="copyStatus" class="copy-status"></span>
+                    </div>
+
+                    <!-- HEADLINERS -->
+                    <div class="collapsible" id="col_headliners">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_headliners')">
+                            <span class="arrow">▸</span> Headliners
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="quantity-row">
+                                <label>Number of Headliners:</label>
+                                <input id="numHeadliners" type="number" min="0" max="10" value="0" onchange="regenerateHeadliners()">
+                            </div>
+                            <div id="headlinerInputs"></div>
+                        </div>
+                    </div>
+
+                    <!-- DIRECT SUPPORT -->
+                    <div class="collapsible" id="col_support">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_support')">
+                            <span class="arrow">▸</span> Direct Support
+                        </div>
+                        <div class="collapsible-content">
+
+                            <div class="headliner-card">
+                                <h3>Direct Support</h3>
+
+                                <label>Name:</label>
+                                <input id="directSupportName" type="text" placeholder="Direct support name" oninput="updateBudget()">
+
+                                <label>Fee:</label>
+                                <input id="directSupport" type="number" min="0" value="0" oninput="updateBudget()">
+
+                                <label>Hotel:</label>
+                                <input id="directSupportHotel" type="text" placeholder="Hotel details" oninput="updateBudget()">
+
+                                <label>Rider:</label>
+                                <input id="directSupportRider" type="text" placeholder="Rider details" oninput="updateBudget()">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- LOCAL DJS -->
+                    <div class="collapsible" id="col_localdjs">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_localdjs')">
+                            <span class="arrow">▸</span> Local DJs
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="quantity-row">
+                                <label>Number of Local DJs:</label>
+                                <input id="numLocalDJs" type="number" min="0" max="20" value="0" onchange="regenerateLocalDJs()">
+                            </div>
+                            <div id="localDJInputs"></div>
+                        </div>
+                    </div>
+
+                    <!-- CDJS -->
+                    <div class="collapsible" id="col_cdjs">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_cdjs')">
+                            <span class="arrow">▸</span> CDJs / Sound
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="quantity-row">
+                                <label>Number of CDJ Rentals:</label>
+                                <input id="numCDJs" type="number" min="0" max="20" value="0" onchange="regenerateCDJs()">
+                            </div>
+                            <div id="cdjInputs"></div>
+                        </div>
+                    </div>
+
+                    <!-- SHOW RUNNERS -->
+                    <div class="collapsible" id="col_showrunners">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_showrunners')">
+                            <span class="arrow">▸</span> Show Runners
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="quantity-row">
+                                <label>Number of Show Runners:</label>
+                                <input id="numShowRunners" type="number" min="0" max="20" value="0" onchange="regenerateShowRunners()">
+                            </div>
+                            <div id="showRunnerInputs"></div>
+                        </div>
+                    </div>
+
+                    <!-- MERCH VENDORS -->
+                    <div class="collapsible" id="col_merchvendors">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_merchvendors')">
+                            <span class="arrow">▸</span> Merch Vendors
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="quantity-row">
+                                <label>Number of Merch Vendors:</label>
+                                <input id="numMerchVendors" type="number" min="0" max="20" value="0" onchange="regenerateMerchVendors()">
+                            </div>
+                            <div id="merchVendorInputs"></div>
+                        </div>
+                    </div>
+
+                    <!-- OTHER CATEGORIES -->
+                    <div class="collapsible" id="col_othercats">
+                        <div class="collapsible-header" onclick="toggleCollapse('col_othercats')">
+                            <span class="arrow">▸</span> Other Categories
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="quantity-row">
+                                <label>How many Other sections?</label>
+                                <input id="numOtherCategories" type="number" min="0" max="20" value="0" onchange="regenerateOtherCategories()">
+                            </div>
+                            <div id="otherCategories"></div>
+                        </div>
+                    </div>
+
+                </form>
             </div>
-          </div>
 
-          <div class="chart-card">
-            <div class="chart-subtitle">Profit / Loss</div>
-            <div class="chart-canvas-wrap">
-              <canvas id="profitChart"></canvas>
+            <!-- MIDDLE COLUMN -->
+            <div class="preview-panel">
+                <div id="summary">
+                    <div class="summary-title">SUMMARY</div>
+                    <p id="totalCost">$0</p>
+                </div>
             </div>
-          </div>
 
-          <div class="chart-actions">
-            <button type="button" onclick="downloadCSV()">Export CSV</button>
-          </div>
+            <!-- RIGHT COLUMN -->
+            <div class="chart-panel">
+                <div class="charts-section">
+                    <div class="charts-title" id="chartsEventTitle">Event</div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-subtitle">Costs</div>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="costChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-subtitle">Profit / Loss</div>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="profitChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-actions">
+                            <button type="button" onclick="downloadCSV()">Export CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      </div>
     </div>
 
-  </div>
-</div>
+    <script type="module" src="js/modules/main.js"></script>
 
-<script type="module" src="js/modules/main.js"></script>
+    <script>
+        // nav menu toggle
+        (function () {
+            const dd = document.getElementById('navDropdown');
+            const toggle = document.getElementById('navToggle');
 
-<script>
-  // nav menu toggle
-  (function () {
-    const dd = document.getElementById('navDropdown');
-    const toggle = document.getElementById('navToggle');
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dd.classList.toggle('active');
+            });
 
-    toggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dd.classList.toggle('active');
-    });
-
-    document.addEventListener('click', () => dd.classList.remove('active'));
-  })();
-</script>
+            document.addEventListener('click', () => dd.classList.remove('active'));
+        })();
+    </script>
 
 </body>
 </html>
