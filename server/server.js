@@ -1,15 +1,16 @@
-// server/server.js
+// server/server.js - MongoDB Version for Railway
 const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Serve frontend from ../client (repo layout)
+// Serve frontend from ../client
 const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(__dirname, '..', 'client');
 const INDEX_FILE = process.env.INDEX_FILE || 'index.html';
 
@@ -18,8 +19,63 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, INDEX_FILE));
 });
 
-const BUDGETS_DIR = path.join(__dirname, 'budgets');
-fs.mkdir(BUDGETS_DIR, { recursive: true }).catch(() => {});
+// MongoDB Connection
+// Railway provides MONGO_URL, Atlas provides MONGODB_URI
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
+
+if (!MONGODB_URI) {
+  console.error('❌ ERROR: No MongoDB connection string found!');
+  console.error('   Looking for: MONGODB_URI or MONGO_URL');
+  console.error('   Available variables:', Object.keys(process.env).filter(k => k.includes('MONGO')).join(', '));
+  process.exit(1);
+}
+
+console.log('🔗 Connecting to MongoDB...');
+console.log('   Using variable:', process.env.MONGO_URL ? 'MONGO_URL' : 'MONGODB_URI');
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('✅ Successfully connected to MongoDB!');
+  console.log(`   Database: ${mongoose.connection.db.databaseName}`);
+  console.log(`   Host: ${mongoose.connection.host}`);
+})
+.catch(err => {
+  console.error('❌ MongoDB connection failed:', err.message);
+  console.error('   Full error:', err);
+  process.exit(1);
+});
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', err => {
+  console.error('❌ MongoDB error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️  MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected');
+});
+
+// Budget Schema
+const budgetSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true, index: true },
+  name: { type: String, required: true },
+  date: { type: String, required: true },
+  csv: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Index for faster queries
+budgetSchema.index({ name: 1, date: 1 });
+budgetSchema.index({ updatedAt: -1 });
+
+const Budget = mongoose.model('Budget', budgetSchema);
 
 // ---------- helpers ----------
 function sanitizeIdPart(str) {
@@ -32,140 +88,94 @@ function sanitizeIdPart(str) {
     .replace(/^_+|_+$/g, '');
 }
 
-// fallback deterministic ID (only used if client doesn't send budgetId)
 function buildBudgetIdFromNameDate(name, date) {
   const n = sanitizeIdPart(name) || 'untitled';
   const d = sanitizeIdPart(date) || 'nodate';
   return `${n}__${d}`;
 }
 
-async function fileExists(p) {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function toTimeMs(isoLike) {
-  const t = Date.parse(String(isoLike || ''));
-  return Number.isFinite(t) ? t : 0;
-}
-
-function keyNameDate(name, date) {
-  // Normalize for grouping only (display still uses original name/date)
-  const n = String(name || '').trim().toLowerCase();
-  const d = String(date || '').trim();
-  return `${n}||${d}`;
-}
-
 // ---------- routes ----------
-// IMPORTANT: Specific routes MUST come before parameterized routes!
 
-// list budgets (metadata) - DEDUPED by (name, date) keeping the latest updatedAt/createdAt
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const status = {
+    status: 'healthy',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: mongoose.connection.db ? mongoose.connection.db.databaseName : 'unknown',
+    timestamp: new Date().toISOString()
+  };
+  res.json(status);
+});
+
+// List budgets (metadata)
 app.get('/api/budgets', async (req, res) => {
   try {
-    const files = await fs.readdir(BUDGETS_DIR);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
-
-    const all = [];
-    for (const file of jsonFiles) {
-      const fullPath = path.join(BUDGETS_DIR, file);
-      try {
-        const content = await fs.readFile(fullPath, 'utf8');
-        const parsed = JSON.parse(content);
-        if (parsed && parsed.id && parsed.name && parsed.date) {
-          all.push(parsed);
-        }
-      } catch (err) {
-        console.warn(`Skipping invalid JSON file: ${file}`, err.message);
-      }
-    }
-
-    // Deduplicate by (name,date), keep newest by updatedAt then createdAt
-    const bestByKey = new Map();
-    for (const b of all) {
-      const k = keyNameDate(b.name, b.date);
-      const score = Math.max(toTimeMs(b.updatedAt), toTimeMs(b.createdAt));
-
-      const existing = bestByKey.get(k);
-      if (!existing) {
-        bestByKey.set(k, { b, score });
-        continue;
-      }
-
-      if (score > existing.score) {
-        bestByKey.set(k, { b, score });
-      }
-    }
-
-    const budgets = Array.from(bestByKey.values()).map(x => x.b);
-
-    console.log(`[GET /api/budgets] Found ${all.length} metadata files, returning ${budgets.length} after dedupe`);
+    console.log('[GET /api/budgets] Fetching budget list...');
+    
+    const budgets = await Budget.find({}, { csv: 0, __v: 0 })
+      .sort({ updatedAt: -1 })
+      .lean();
+    
+    console.log(`[GET /api/budgets] Returning ${budgets.length} budgets`);
     res.json(budgets);
   } catch (error) {
     console.error('[GET /api/budgets] Error:', error);
-    res.status(500).json({ error: 'Failed to fetch budgets' });
+    res.status(500).json({ error: 'Failed to fetch budgets', details: error.message });
   }
 });
 
-// search budgets - MUST come BEFORE /api/budgets/:id
+// Search budgets
 app.get('/api/budgets/search', async (req, res) => {
   try {
     const { name, dateFrom, dateTo } = req.query;
     console.log(`[GET /api/budgets/search] Query:`, { name, dateFrom, dateTo });
 
-    const files = await fs.readdir(BUDGETS_DIR);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
-
-    const budgets = [];
-    for (const file of jsonFiles) {
-      const fullPath = path.join(BUDGETS_DIR, file);
-      try {
-        const content = await fs.readFile(fullPath, 'utf8');
-        const parsed = JSON.parse(content);
-        if (parsed && parsed.id) budgets.push(parsed);
-      } catch (err) {
-        console.warn(`Skipping invalid JSON file: ${file}`, err.message);
-      }
-    }
-
-    let filtered = budgets;
-
+    const filter = {};
+    
     if (name) {
-      const q = String(name).toLowerCase();
-      filtered = filtered.filter(b => (b.name || '').toLowerCase().includes(q));
+      filter.name = { $regex: name, $options: 'i' };
     }
-    if (dateFrom) filtered = filtered.filter(b => b.date >= dateFrom);
-    if (dateTo) filtered = filtered.filter(b => b.date <= dateTo);
+    if (dateFrom) {
+      filter.date = { ...filter.date, $gte: dateFrom };
+    }
+    if (dateTo) {
+      filter.date = { ...filter.date, $lte: dateTo };
+    }
 
-    console.log(`[GET /api/budgets/search] Returning ${filtered.length} results`);
-    res.json(filtered);
+    const budgets = await Budget.find(filter, { csv: 0, __v: 0 })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    console.log(`[GET /api/budgets/search] Returning ${budgets.length} results`);
+    res.json(budgets);
   } catch (error) {
     console.error('[GET /api/budgets/search] Error:', error);
-    res.status(500).json({ error: 'Search failed' });
+    res.status(500).json({ error: 'Search failed', details: error.message });
   }
 });
 
-// load a budget csv
+// Load a budget CSV - comes after /search
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`[GET /api/budgets/${id}] Loading budget...`);
-
-    const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
-    const csv = await fs.readFile(csvPath, 'utf8');
-
-    console.log(`[GET /api/budgets/${id}] Successfully loaded ${csv.length} bytes`);
-    res.type('text/csv').send(csv);
+    
+    const budget = await Budget.findOne({ id }).lean();
+    
+    if (!budget) {
+      console.log(`[GET /api/budgets/${id}] Budget not found`);
+      return res.status(404).json({ error: 'Budget not found' });
+    }
+    
+    console.log(`[GET /api/budgets/${id}] Successfully loaded ${budget.csv.length} bytes`);
+    res.type('text/csv').send(budget.csv);
   } catch (error) {
-    console.error(`[GET /api/budgets/${req.params.id}] Error:`, error.message);
-    res.status(404).json({ error: 'Budget not found' });
+    console.error(`[GET /api/budgets/${req.params.id}] Error:`, error);
+    res.status(500).json({ error: 'Failed to load budget', details: error.message });
   }
 });
 
-// save (UPSERT)
+// Save (UPSERT)
 app.post('/api/budgets', async (req, res) => {
   try {
     const { csv, name, date, budgetId } = req.body;
@@ -178,77 +188,100 @@ app.post('/api/budgets', async (req, res) => {
     const safeName = name || 'Untitled Budget';
     const safeDate = date || new Date().toISOString().split('T')[0];
 
-    // If client provides an ID, always use it (one-file-per-budget)
+    // If client provides an ID, always use it (one-document-per-budget)
     const incomingId = budgetId ? sanitizeIdPart(budgetId) : '';
     const id = incomingId || buildBudgetIdFromNameDate(safeName, safeDate);
 
     console.log(`[POST /api/budgets] Saving budget "${safeName}" with id: ${id}`);
 
-    const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
-    const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
-
-    const nowIso = new Date().toISOString();
-
-    // Preserve createdAt if already exists
-    let createdAt = nowIso;
-    if (await fileExists(metaPath)) {
-      try {
-        const existing = JSON.parse(await fs.readFile(metaPath, 'utf8'));
-        if (existing && existing.createdAt) {
-          createdAt = existing.createdAt;
-          console.log(`[POST /api/budgets] Updating existing budget (created: ${createdAt})`);
+    // Use findOneAndUpdate with upsert for atomic operation
+    const result = await Budget.findOneAndUpdate(
+      { id },
+      {
+        $set: {
+          name: safeName,
+          date: safeDate,
+          csv,
+          updatedAt: new Date()
+        },
+        $setOnInsert: {
+          createdAt: new Date()
         }
-      } catch (err) {
-        console.warn('[POST /api/budgets] Could not parse existing metadata:', err.message);
+      },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true
       }
-    } else {
-      console.log(`[POST /api/budgets] Creating new budget`);
-    }
+    );
 
-    await fs.writeFile(csvPath, csv, 'utf8');
-
-    const metadata = {
-      id,
-      name: safeName,
-      date: safeDate,
-      createdAt,
-      updatedAt: nowIso
-    };
-
-    await fs.writeFile(metaPath, JSON.stringify(metadata, null, 2), 'utf8');
-
-    console.log(`[POST /api/budgets] Successfully saved budget ${id}`);
-    res.json({ id, message: 'Budget saved successfully (upsert)' });
+    const isNew = result.createdAt.getTime() === result.updatedAt.getTime();
+    console.log(`[POST /api/budgets] ${isNew ? 'Created' : 'Updated'} budget ${id}`);
+    
+    res.json({ 
+      id, 
+      message: `Budget ${isNew ? 'created' : 'updated'} successfully`,
+      isNew 
+    });
   } catch (error) {
     console.error('[POST /api/budgets] Error:', error);
-    res.status(500).json({ error: 'Failed to save budget' });
+    
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Budget ID already exists', details: error.message });
+    }
+    
+    res.status(500).json({ error: 'Failed to save budget', details: error.message });
   }
 });
 
-// delete
+// Delete
 app.delete('/api/budgets/:id', async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`[DELETE /api/budgets/${id}] Deleting budget...`);
-
-    const csvPath = path.join(BUDGETS_DIR, `${id}.csv`);
-    const metaPath = path.join(BUDGETS_DIR, `${id}.json`);
-
-    await fs.unlink(csvPath);
-    await fs.unlink(metaPath);
-
+    
+    const result = await Budget.deleteOne({ id });
+    
+    if (result.deletedCount === 0) {
+      console.log(`[DELETE /api/budgets/${id}] Budget not found`);
+      return res.status(404).json({ error: 'Budget not found' });
+    }
+    
     console.log(`[DELETE /api/budgets/${id}] Successfully deleted`);
     res.json({ message: 'Budget deleted successfully' });
   } catch (error) {
-    console.error(`[DELETE /api/budgets/${req.params.id}] Error:`, error.message);
-    res.status(500).json({ error: 'Failed to delete budget' });
+    console.error(`[DELETE /api/budgets/${req.params.id}] Error:`, error);
+    res.status(500).json({ error: 'Failed to delete budget', details: error.message });
   }
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error', details: err.message });
+});
+
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✓ Server running on http://localhost:${PORT}`);
-  console.log(`✓ Serving frontend from: ${FRONTEND_DIR}`);
-  console.log(`✓ Budgets stored in: ${BUDGETS_DIR}`);
-  console.log(`✓ Ready to accept requests`);
+  console.log('========================================');
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Frontend directory: ${FRONTEND_DIR}`);
+  console.log(`✅ MongoDB: ${mongoose.connection.readyState === 1 ? 'CONNECTED' : 'Connecting...'}`);
+  console.log('========================================');
+  console.log('✅ Ready to accept requests');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, closing server...');
+  await mongoose.connection.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, closing server...');
+  await mongoose.connection.close();
+  process.exit(0);
 });
