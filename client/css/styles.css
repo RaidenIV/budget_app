@@ -698,7 +698,7 @@ html[data-theme="light"] .nav-menu button.nav-item-btn {
     background-size: 20px 20px;
 
     /* move left from edge + vertically centered */
-    background-position: calc(100% - 20px) 50%;
+    background-position: calc(100% - 10px) 50%;
 }
 
 /* Danger buttons (Save/Reset) */
@@ -778,3 +778,4 @@ form select + .collapsible,
 form .quantity-row + .collapsible {
     margin-top: var(--card-gap);
 }
+
