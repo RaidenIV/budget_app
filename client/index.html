@@ -46,6 +46,13 @@
             <p>Total Expenses: $<span id="totalExpenses">0</span></p>
             <p>Total Incoming Sales: $<span id="totalRevenue">0</span></p>
             <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
+            
+            <div style="margin-top: 1.5rem;">
+                <button type="button" onclick="window.open('analytics.html', '_blank', 'width=1200,height=800')" 
+                        style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s ease;">
+                    📊 View All Events Analytics
+                </button>
+            </div>
         </div>
 
         <!-- SERVER LOAD SECTION -->
@@ -374,4 +381,3 @@ window.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
-
