@@ -69,6 +69,23 @@ app.get('/api/budgets', async (req, res) => {
   }
 });
 
+// GET all budgets WITH CSV data (for analytics)
+app.get('/api/budgets/all-data', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+    const budgets = await db.collection('budgets')
+      .find({})
+      .toArray();
+    res.json(budgets);
+  } catch (error) {
+    console.error('Error fetching budgets with data:', error);
+    res.status(500).json({ error: 'Failed to fetch budgets' });
+  }
+});
+
+
 // GET specific budget (accept custom id OR Mongo _id)
 app.get('/api/budgets/:id', async (req, res) => {
   try {
