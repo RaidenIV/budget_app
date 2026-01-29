@@ -221,10 +221,7 @@ function updateDisplay(aggregated) {
   document.getElementById('totalExpenses_analytics').textContent = `$${aggregated.totalExpenses.toFixed(2)}`;
   const profitEl = document.getElementById('totalProfit');
   profitEl.textContent = `${aggregated.totalProfit >= 0 ? '+' : ''}$${aggregated.totalProfit.toFixed(2)}`;
-  profitEl.className = `stat-value ${aggregated.totalProfit >= 0 ? 'positive' : 'negative'}`;
-  const periodMap = { 'all': 'All time', 'year': 'This year', 'month': 'This month' };
-  const periodText = typeof currentFilter === 'object' ? `${getMonthName(currentFilter.month)} ${currentFilter.year}` : periodMap[currentFilter] || 'Selected period';
-  document.getElementById('eventsPeriod').textContent = periodText;
+  profitEl.className = `stat-inline-value ${aggregated.totalProfit >= 0 ? 'positive' : 'negative'}`;
   const expenseLabels = Object.keys(aggregated.expenses);
   const expenseValues = Object.values(aggregated.expenses);
   expensesChart = createOrUpdateChart(expensesChart, 'expensesChartAnalytics', expenseLabels, expenseValues, EXP_COLORS);
