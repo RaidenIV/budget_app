@@ -11,6 +11,12 @@ let revenueChart = null;
 
 const EXP_COLORS = ["#FF6384", "#36A2EB", "#FFCE56", "#8BC34A", "#9C27B0", "#FF9800", "#607D8B"];
 const REV_COLORS = ["#4CAF50", "#03A9F4", "#FFC107", "#E91E63", "#9E9E9E", "#00BCD4"];
+const CHART_TEXT = "#ffffff";
+
+// Set Chart.js global defaults for text color
+if (typeof Chart !== "undefined" && Chart?.defaults) {
+  Chart.defaults.color = CHART_TEXT;
+}
 
 function parseCSV(csvText) {
   const lines = csvText.split('\n').filter(l => l.trim());
@@ -193,7 +199,7 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
               return data.labels.map((label, i) => {
                 const value = data.datasets[0].data[i];
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
-                return { text: `${label}: $${value.toFixed(2)} (${percentage}%)`, fillStyle: data.datasets[0].backgroundColor[i], hidden: false, index: i };
+                return { text: `${label}: $${value.toFixed(2)} (${percentage}%)`, fontColor: CHART_TEXT, fillStyle: data.datasets[0].backgroundColor[i], hidden: false, index: i };
               });
             }
           }
