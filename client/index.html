@@ -135,9 +135,15 @@
 
 .charts-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
     gap: 2rem;
     margin-bottom: 2rem;
+}
+
+@media (max-width: 1100px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 .chart-card {
@@ -250,9 +256,8 @@
             <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
             
             <div style="margin-top: 1.5rem;">
-                <button type="button" id="toggleAnalyticsBtn" onclick="toggleAnalyticsView()" 
-                        style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, var(--accent), #00cc88); border: none; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                    📊 View All Events Analytics
+                <button type="button" id="toggleAnalyticsBtn" onclick="toggleAnalyticsView()">
+                    View All Events Analytics
                 </button>
             </div>
         </div>
@@ -548,7 +553,7 @@
     </div>
     
     <div class="analytics-header">
-        <h1>📊 Budget Analytics</h1>
+        <h1>Aggregated Budget Analytics</h1>
         <div class="time-filter">
             <button id="btnAllTime" class="active" onclick="setTimeFilter('all')">All Time</button>
             <button id="btnYear" onclick="setTimeFilter('year')">This Year</button>
