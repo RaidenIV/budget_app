@@ -199,7 +199,7 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
               return data.labels.map((label, i) => {
                 const value = data.datasets[0].data[i];
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
-                return { text: `${label}: $${value.toFixed(2)} (${percentage}%)`, fontColor: CHART_TEXT, fillStyle: data.datasets[0].backgroundColor[i], hidden: false, index: i };
+                return { text: `${label}: $${value.toFixed(2)} (${percentage}%)`, fontColor: CHART_TEXT, fillStyle: data.datasets[0].backgroundColor[i], strokeStyle: 'transparent', lineWidth: 0, hidden: false, index: i };
               });
             }
           }
