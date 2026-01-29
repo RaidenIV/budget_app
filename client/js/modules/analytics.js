@@ -312,15 +312,45 @@ export async function loadAnalytics() {
     }
     const budgetsData = await response.json();
     console.log('✅ Fetched budgets:', budgetsData.length);
-    allBudgets = budgetsData.map(b => {
+    
+    // Process all budgets with their metadata
+    const processedBudgets = budgetsData.map(b => {
       if (!b.csv) {
         console.warn('⚠️  Budget missing CSV:', b);
         return null;
       }
       const parsed = parseCSV(b.csv);
-      return calculateBudgetFromData(parsed);
+      const calculated = calculateBudgetFromData(parsed);
+      // Add metadata for deduplication
+      calculated.createdAt = b.createdAt || b.created_at || b.timestamp || '';
+      calculated.id = b.id || b._id || '';
+      return calculated;
     }).filter(b => b && b.showDate);
-    console.log('✅ Processed budgets:', allBudgets.length);
+    
+    console.log('✅ Processed budgets:', processedBudgets.length);
+    
+    // Deduplicate: keep only the latest budget for each show (by title + date)
+    const budgetMap = new Map();
+    processedBudgets.forEach(budget => {
+      const key = `${(budget.showTitle || '').toLowerCase().trim()}__${(budget.showDate || '').trim()}`;
+      
+      if (!budgetMap.has(key)) {
+        budgetMap.set(key, budget);
+      } else {
+        // Compare timestamps - keep the newer one
+        const existing = budgetMap.get(key);
+        const existingTime = new Date(existing.createdAt || 0).getTime();
+        const currentTime = new Date(budget.createdAt || 0).getTime();
+        
+        if (currentTime > existingTime) {
+          budgetMap.set(key, budget);
+        }
+      }
+    });
+    
+    allBudgets = Array.from(budgetMap.values());
+    console.log('✅ Deduplicated to unique shows:', allBudgets.length);
+    
     if (loadingEl) loadingEl.style.display = 'none';
     if (contentEl) contentEl.style.display = 'block';
     populateYearSelector();
