@@ -230,6 +230,9 @@
 </div>
 
 <div class="page-wrapper">
+
+<!-- STANDARD BUDGET VIEW -->
+<div id="standardView" class="view-container active">
     <h1>Event Budget Tracker</h1>
 
     <div class="main-container">
@@ -532,6 +535,99 @@
         </section>
     </aside>
     </div>
+
+</div> <!-- END standardView -->
+
+<!-- ANALYTICS VIEW -->
+<div id="analyticsView" class="view-container">
+    <div class="back-button">
+        <button type="button" onclick="toggleAnalyticsView()" 
+                style="padding: 0.75rem 1.5rem; background: var(--button-bg); border: 2px solid var(--line); color: var(--text); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            ← Back to Budget View
+        </button>
+    </div>
+    
+    <div class="analytics-header">
+        <h1>📊 Budget Analytics</h1>
+        <div class="time-filter">
+            <button id="btnAllTime" class="active" onclick="setTimeFilter('all')">All Time</button>
+            <button id="btnYear" onclick="setTimeFilter('year')">This Year</button>
+            <button id="btnMonth" onclick="setTimeFilter('month')">This Month</button>
+            <div class="month-year-selector" id="customSelector" style="display: none;">
+                <select id="monthSelect" onchange="applyCustomFilter()">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+                <select id="yearSelect" onchange="applyCustomFilter()"></select>
+            </div>
+            <button onclick="setTimeFilter('custom')">Custom</button>
+        </div>
+    </div>
+
+    <div id="loadingIndicator" class="loading">
+        <p>Loading budget data...</p>
+    </div>
+
+    <div id="analyticsContent" style="display: none;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Events</div>
+                <div class="stat-value" id="totalEvents">0</div>
+                <div class="stat-subtext" id="eventsPeriod">All time</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="totalRevenue_analytics">$0.00</div>
+                <div class="stat-subtext">Across all events</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Total Expenses</div>
+                <div class="stat-value" id="totalExpenses_analytics">$0.00</div>
+                <div class="stat-subtext">Across all events</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Net Profit</div>
+                <div class="stat-value" id="totalProfit">$0.00</div>
+                <div class="stat-subtext">Revenue - Expenses</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h2>Aggregated Expenses by Category</h2>
+                <div class="chart-wrapper">
+                    <canvas id="expensesChartAnalytics"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h2>Aggregated Revenue by Source</h2>
+                <div class="chart-wrapper">
+                    <canvas id="revenueChartAnalytics"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="event-list">
+            <h2>Events in Selected Period</h2>
+            <div id="eventsList"></div>
+        </div>
+    </div>
+</div> <!-- END analyticsView -->
+
 </div>
 
 
