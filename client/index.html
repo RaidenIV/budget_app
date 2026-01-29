@@ -146,42 +146,31 @@
     }
 }
 
-.chart-card {
+#analyticsView .chart-card {
     background: var(--panel);
     padding: 1.5rem;
     border-radius: 12px;
     border: 1px solid var(--line);
 }
 
-.chart-card h2 {
+#analyticsView .chart-card h2 {
     margin: 0 0 1rem 0;
     font-size: 1.25rem;
     text-align: center;
 }
 
-.chart-wrapper {
+#analyticsView .chart-wrapper {
     position: relative;
     height: 400px;
 }
 
-.loading {
+#analyticsView .loading {
     text-align: center;
     padding: 3rem;
     color: var(--muted);
 }
 
-.event-list {
-    background: var(--panel);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-}
-
-.event-list h2 {
-    margin: 0 0 1rem 0;
-}
-
-.event-item {
+#analyticsView .event-item {
     padding: 0.75rem;
     border-bottom: 1px solid var(--line);
     display: flex;
@@ -189,34 +178,102 @@
     align-items: center;
 }
 
-.event-item:last-child {
+#analyticsView .event-item:last-child {
     border-bottom: none;
 }
 
-.event-name {
+#analyticsView .event-name {
     font-weight: 500;
 }
 
-.event-date {
+#analyticsView .event-date {
     color: var(--muted);
     font-size: 0.9rem;
 }
 
-.event-profit {
+#analyticsView .event-profit {
     font-weight: bold;
 }
 
-.event-profit.positive {
+#analyticsView .event-profit.positive {
     color: var(--success);
 }
 
-.event-profit.negative {
+#analyticsView .event-profit.negative {
     color: #ff4444;
 }
 
-.back-button {
+#analyticsView .back-button {
     margin-bottom: 1.5rem;
 }
+
+/* Inline stats in header */
+.stats-inline {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.stat-inline-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-inline-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.stat-inline-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text);
+}
+
+.stat-inline-value.positive {
+    color: var(--success);
+}
+
+.stat-inline-value.negative {
+    color: #ff4444;
+}
+
+#analyticsView .charts-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1100px) {
+    #analyticsView .charts-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+#analyticsView .event-list {
+    background: var(--panel);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    max-width: 33.33%;
+    margin: 0 auto;
+}
+
+#analyticsView .event-list h2 {
+    margin: 0 0 1rem 0;
+}
+
+@media (max-width: 900px) {
+    #analyticsView .event-list {
+        max-width: 100%;
+    }
+}
+
 </style>
 </head>
 
@@ -553,7 +610,28 @@
     </div>
     
     <div class="analytics-header">
-        <h1>Aggregated Budget Analytics</h1>
+        <h1 style="color: #ffffff;">Aggregated Budget Analytics</h1>
+        
+        <!-- Stats integrated into header -->
+        <div class="stats-inline">
+            <div class="stat-inline-item">
+                <span class="stat-inline-label">Total Events:</span>
+                <span class="stat-inline-value" id="totalEvents">0</span>
+            </div>
+            <div class="stat-inline-item">
+                <span class="stat-inline-label">Total Revenue:</span>
+                <span class="stat-inline-value" id="totalRevenue_analytics">$0.00</span>
+            </div>
+            <div class="stat-inline-item">
+                <span class="stat-inline-label">Total Expenses:</span>
+                <span class="stat-inline-value" id="totalExpenses_analytics">$0.00</span>
+            </div>
+            <div class="stat-inline-item">
+                <span class="stat-inline-label">Net Profit:</span>
+                <span class="stat-inline-value" id="totalProfit">$0.00</span>
+            </div>
+        </div>
+        
         <div class="time-filter">
             <button id="btnAllTime" class="active" onclick="setTimeFilter('all')">All Time</button>
             <button id="btnYear" onclick="setTimeFilter('year')">This Year</button>
@@ -584,32 +662,6 @@
     </div>
 
     <div id="analyticsContent" style="display: none;">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Events</div>
-                <div class="stat-value" id="totalEvents">0</div>
-                <div class="stat-subtext" id="eventsPeriod">All time</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-label">Total Revenue</div>
-                <div class="stat-value" id="totalRevenue_analytics">$0.00</div>
-                <div class="stat-subtext">Across all events</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-label">Total Expenses</div>
-                <div class="stat-value" id="totalExpenses_analytics">$0.00</div>
-                <div class="stat-subtext">Across all events</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-label">Net Profit</div>
-                <div class="stat-value" id="totalProfit">$0.00</div>
-                <div class="stat-subtext">Revenue - Expenses</div>
-            </div>
-        </div>
-
         <div class="charts-container">
             <div class="chart-card">
                 <h2>Aggregated Expenses by Category</h2>
@@ -631,9 +683,6 @@
             <div id="eventsList"></div>
         </div>
     </div>
-</div> <!-- END analyticsView -->
-
-</div>
 
 
 <!-- Navigation Menu Script -->
