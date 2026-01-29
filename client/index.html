@@ -29,6 +29,7 @@
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+    overflow-x: hidden;
 }
 
 .analytics-header {
@@ -36,17 +37,21 @@
     padding: 2rem 1rem;
     background: var(--panel);
     border-radius: 12px;
-    margin-bottom: 2rem;
+    margin: 0 auto 2rem auto;
     border: 1px solid var(--line);
+    max-width: 50%;
+}
+
+@media (max-width: 1200px) {
+    .analytics-header {
+        max-width: 100%;
+    }
 }
 
 .analytics-header h1 {
     margin: 0 0 1rem 0;
     font-size: 2rem;
-    background: linear-gradient(135deg, var(--accent), #00cc88);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
 }
 
 .time-filter {
@@ -133,24 +138,13 @@
     color: var(--muted);
 }
 
-.charts-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-@media (max-width: 1100px) {
-    .charts-container {
-        grid-template-columns: 1fr;
-    }
-}
-
 #analyticsView .chart-card {
     background: var(--panel);
     padding: 1.5rem;
     border-radius: 12px;
     border: 1px solid var(--line);
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 #analyticsView .chart-card h2 {
@@ -162,6 +156,8 @@
 #analyticsView .chart-wrapper {
     position: relative;
     height: 400px;
+    width: 100%;
+    max-width: 100%;
 }
 
 #analyticsView .loading {
@@ -247,6 +243,8 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
     margin-bottom: 2rem;
+    max-width: 100%;
+    width: 100%;
 }
 
 @media (max-width: 1100px) {
