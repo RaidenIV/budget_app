@@ -102,6 +102,7 @@ function displaySearchResults(budgets) {
   resultsContainer.innerHTML = budgets.map(budget => `
     <div class="budget-result">
       <div><strong>${budget.name ?? 'Untitled'}</strong></div>
+      <div>${budget.venueName ? `@ ${budget.venueName}` : ''}</div>
       <div>${budget.date ?? ''}</div>
       <div class="button-row">
         <button type="button" onclick="loadBudgetById('${budget.id || budget._id}')">Load</button>
@@ -150,6 +151,7 @@ export async function deleteBudgetById(budgetId) {
  */
 export async function handleSaveBudgetToServer() {
   const showTitle = document.getElementById('showTitle')?.value?.trim() || '';
+  const venueName = document.getElementById('venueName')?.value?.trim() || '';
   const showDate = document.getElementById('showDate')?.value?.trim() || '';
 
   if (!showTitle) {
@@ -165,6 +167,7 @@ export async function handleSaveBudgetToServer() {
 
     const result = await saveBudgetToServer(csvData, {
       name: showTitle,
+      venueName: venueName,
       date: showDate || new Date().toISOString().split('T')[0]
     });
 
@@ -226,6 +229,7 @@ function displayModalBudgetList(budgets) {
   listContainer.innerHTML = budgets.map(budget => `
     <div class="modal-budget-row" onclick="loadBudgetAndCloseModal('${budget.id || budget._id}')">
       <div><strong>${budget.name ?? 'Untitled'}</strong></div>
+      <div>${budget.venueName ? `@ ${budget.venueName}` : ''}</div>
       <div>${budget.date ?? ''}</div>
     </div>
   `).join('');
