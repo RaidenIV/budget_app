@@ -122,23 +122,11 @@
     overflow-x: hidden;
 }
 
-/* Analytics page header with title and back button on same line */
+/* Analytics page header - just back button */
 .analytics-page-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.analytics-page-header h1 {
-    margin: 0;
-    font-size: 2rem;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    justify-content: flex-start;
+    margin-bottom: 1rem;
 }
 
 .analytics-page-header .back-button {
@@ -755,12 +743,8 @@
 
 <!-- ANALYTICS VIEW -->
 <div id="analyticsView" class="view-container">
-    <!-- Page header with title and back button on same line -->
+    <!-- Back button at top -->
     <div class="analytics-page-header">
-        <h1>
-            Aggregated Budget Analytics
-            <img src="https://images.squarespace-cdn.com/content/v1/681ea18dd168a935c26295bd/c311da3d-6fbf-446a-858c-227fa011e7e3/Xodia+MEDIA+Group+%28TRANS%29+%281%29+%281%29.png?format=750w" alt="Xodia Media Group Logo" style="height: 2.5rem; width: auto;">
-        </h1>
         <div class="back-button">
             <button type="button" onclick="toggleAnalyticsView()">
                 ← Back to Budget View
@@ -769,6 +753,10 @@
     </div>
     
     <div class="analytics-header">
+        <h1 style="color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 1rem;">
+            Aggregated Budget Analytics
+            <img src="https://images.squarespace-cdn.com/content/v1/681ea18dd168a935c26295bd/c311da3d-6fbf-446a-858c-227fa011e7e3/Xodia+MEDIA+Group+%28TRANS%29+%281%29+%281%29.png?format=750w" alt="Xodia Media Group Logo" style="height: 2.5rem; width: auto;">
+        </h1>
         
         <!-- Stats integrated into header -->
         <div class="stats-inline">
