@@ -7,7 +7,9 @@
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ======= NAVIGATION MENU ======= */
+    :root{ --accent:#0099ff; --accent-weak: rgba(0,153,255,0.12); }
+
+    /* ======= MENU NAV (hamburger) ======= */
     .nav-dropdown{
       position:fixed;
       top:18px;
@@ -32,7 +34,7 @@
     }
     .nav-toggle:hover{
       background: rgba(36,36,36,0.9);
-      border-color: #0099ff;
+      border-color: var(--accent);
     }
     .nav-toggle-icon{
       position:relative;
@@ -93,53 +95,51 @@
       transition: all 0.3s ease;
     }
     .nav-menu a:hover{
-      background: rgba(0,153,255,0.12);
-      color: #0099ff;
+      background: var(--accent-weak);
+      color: var(--accent);
     }
 
-    /* ======= BACK BUTTON ======= */
-    .back-button {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      cursor: pointer;
+
+    .analytics-topbar{
+      display:flex;
+      align-items:stretch;
+      justify-content:space-between;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
     }
-    .back-button:hover {
+    .back-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 0.9rem 1.25rem;
+      border: 2px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      border-radius: 12px;
+      text-decoration:none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      height: fit-content;
+    }
+    .back-btn:hover{
       background: var(--primary);
       border-color: var(--primary);
       transform: translateY(-2px);
     }
 
-    /* ======= PAGE HEADER WITH TITLE AND BACK BUTTON ======= */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .page-header h1 {
-      margin: 0;
-      font-size: 2rem;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
     .analytics-header {
+
       text-align: center;
       padding: 2rem 1rem;
       background: var(--card-bg);
       border-radius: 12px;
-      margin-bottom: 2rem;
+      margin-bottom: 0;
+      flex: 1;
+      min-width: 320px;
     }
 
     .analytics-header h1 {
@@ -235,33 +235,20 @@
       color: var(--text-dim);
     }
 
-    .charts-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+    .triple-container{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(320px, 1fr));
       gap: 2rem;
       margin-bottom: 2rem;
     }
-
-    @media (max-width: 1200px) {
-      .charts-container {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    @media (max-width: 1200px){
+      .triple-container{ grid-template-columns: 1fr; }
     }
-
-    @media (max-width: 768px) {
-      .charts-container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .chart-card {
+.chart-card {
       background: var(--card-bg);
       padding: 1.5rem;
       border-radius: 12px;
       border: 2px solid var(--border);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
     }
 
     .chart-card h2 {
@@ -273,7 +260,6 @@
     .chart-wrapper {
       position: relative;
       height: 400px;
-      flex: 1;
     }
 
     .loading {
@@ -287,20 +273,16 @@
       padding: 1.5rem;
       border-radius: 12px;
       border: 2px solid var(--border);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
     }
 
     .event-list h2 {
       margin: 0 0 1rem 0;
-      font-size: 1.25rem;
       text-align: center;
     }
-
-    #eventsList {
-      overflow-y: auto;
-      flex: 1;
+    .event-list #eventsList{
+      max-height: 400px;
+      overflow: auto;
+      padding-right: 6px;
     }
 
     .event-item {
@@ -352,13 +334,10 @@
   </div>
 
   <div class="container">
-    <!-- Page Header with Title and Back Button -->
-    <div class="page-header">
+    <div class="analytics-topbar">
+      <a class="back-btn" href="budget.html" target="_top" rel="noopener">← Back to Budget View</a>
+      <div class="analytics-header">
       <h1>📊 Budget Analytics</h1>
-      <a href="index.html" class="back-button">← Back to Budget View</a>
-    </div>
-
-    <div class="analytics-header">
       <div class="time-filter">
         <button id="btnAllTime" class="active" onclick="setTimeFilter('all')">All Time</button>
         <button id="btnYear" onclick="setTimeFilter('year')">This Year</button>
@@ -381,6 +360,7 @@
           <select id="yearSelect" onchange="applyCustomFilter()"></select>
         </div>
         <button onclick="setTimeFilter('custom')">Custom</button>
+      </div>
       </div>
     </div>
 
@@ -414,9 +394,7 @@
           <div class="stat-subtext">Revenue - Expenses</div>
         </div>
       </div>
-
-      <div class="charts-container">
-        <!-- Column 1: Expenses Chart -->
+      <div class="triple-container">
         <div class="chart-card">
           <h2>Aggregated Expenses by Category</h2>
           <div class="chart-wrapper">
@@ -424,13 +402,11 @@
           </div>
         </div>
 
-        <!-- Column 2: Events List -->
         <div class="event-list">
           <h2>Events in Selected Period</h2>
           <div id="eventsList"></div>
         </div>
 
-        <!-- Column 3: Revenue Chart -->
         <div class="chart-card">
           <h2>Aggregated Revenue by Source</h2>
           <div class="chart-wrapper">
@@ -438,7 +414,7 @@
           </div>
         </div>
       </div>
-    </div>
+
   </div>
 
   <script type="module" src="js/analytics.js"></script>
@@ -449,17 +425,15 @@
       const navDropdown = document.getElementById('navDropdown');
       const navToggle = document.getElementById('navToggle');
       
-      if (navToggle && navDropdown) {
-        navToggle.addEventListener('click', (e) => { 
-          e.stopPropagation(); 
-          navDropdown.classList.toggle('active'); 
-        });
-        
-        document.addEventListener('click', () => navDropdown.classList.remove('active'));
-        document.addEventListener('keydown', (e) => { 
-          if (e.key === 'Escape') navDropdown.classList.remove('active'); 
-        });
-      }
+      navToggle.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        navDropdown.classList.toggle('active'); 
+      });
+      
+      document.addEventListener('click', () => navDropdown.classList.remove('active'));
+      document.addEventListener('keydown', (e) => { 
+        if (e.key === 'Escape') navDropdown.classList.remove('active'); 
+      });
     })();
   </script>
 </body>
