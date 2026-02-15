@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Budget Analytics - All Events</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     .analytics-header {
@@ -227,13 +227,13 @@
 
         <div class="stat-card">
           <div class="stat-label">Total Revenue</div>
-          <div class="stat-value" id="totalRevenue">$0.00</div>
+          <div class="stat-value" id="totalRevenue_analytics">$0.00</div>
           <div class="stat-subtext">Across all events</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-label">Total Expenses</div>
-          <div class="stat-value" id="totalExpenses">$0.00</div>
+          <div class="stat-value" id="totalExpenses_analytics">$0.00</div>
           <div class="stat-subtext">Across all events</div>
         </div>
 
@@ -248,14 +248,14 @@
         <div class="chart-card">
           <h2>Aggregated Expenses by Category</h2>
           <div class="chart-wrapper">
-            <canvas id="expensesChart"></canvas>
+            <canvas id="expensesChartAnalytics"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
           <h2>Aggregated Revenue by Source</h2>
           <div class="chart-wrapper">
-            <canvas id="revenueChart"></canvas>
+            <canvas id="revenueChartAnalytics"></canvas>
           </div>
         </div>
       </div>
@@ -267,6 +267,14 @@
     </div>
   </div>
 
-  <script type="module" src="analytics.js"></script>
+  <script src="js/analytics.js"></script>
+  <script>
+    // Auto-load analytics when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof window.loadAnalytics === 'function') {
+        window.loadAnalytics();
+      }
+    });
+  </script>
 </body>
 </html>
