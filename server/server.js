@@ -120,7 +120,7 @@ app.post('/api/budgets', async (req, res) => {
     if (!db) {
       return res.status(503).json({ error: 'Database not connected' });
     }
-    const { csv, name, date } = req.body;
+    const { csv, name, venueName, date } = req.body;
 
     if (!csv || !name || !date) {
       return res.status(400).json({ error: 'Missing required fields: csv, name, date' });
@@ -130,6 +130,7 @@ app.post('/api/budgets', async (req, res) => {
     const budget = {
       id,
       name,
+      venueName: venueName || '',
       date,
       csv,
       createdAt: new Date().toISOString()
