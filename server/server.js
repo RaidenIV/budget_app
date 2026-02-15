@@ -1,12 +1,49 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ObjectId } = require('mongodb');
+const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Use timestamp + original filename to avoid collisions
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept images only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
+});
+
 // IMPORTANT: Serve static files BEFORE other middleware
 app.use(express.static(path.join(__dirname, '..', 'client')));
+
+// Serve uploaded files
+app.use('/uploads', express.static(uploadsDir));
 
 app.use(cors({
   origin: '*',
@@ -85,8 +122,7 @@ app.get('/api/budgets/all-data', async (req, res) => {
   }
 });
 
-
-// GET specific budget (accept custom id OR Mongo _id)
+// GET specific budget CSV (accept custom id OR Mongo _id)
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     if (!db) {
@@ -114,13 +150,48 @@ app.get('/api/budgets/:id', async (req, res) => {
   }
 });
 
-// POST new budget
-app.post('/api/budgets', async (req, res) => {
+// GET specific budget's flyer
+app.get('/api/budgets/:id/flyer', async (req, res) => {
   try {
     if (!db) {
       return res.status(503).json({ error: 'Database not connected' });
     }
-    const { csv, name, date } = req.body;
+
+    const param = req.params.id;
+
+    // Try custom id first
+    let budget = await db.collection('budgets').findOne({ id: param });
+
+    // Fallback to ObjectId
+    if (!budget && ObjectId.isValid(param)) {
+      budget = await db.collection('budgets').findOne({ _id: new ObjectId(param) });
+    }
+
+    if (!budget || !budget.flyerPath) {
+      return res.status(404).json({ error: 'Flyer not found' });
+    }
+
+    const flyerFullPath = path.join(__dirname, budget.flyerPath);
+    
+    if (!fs.existsSync(flyerFullPath)) {
+      return res.status(404).json({ error: 'Flyer file not found on disk' });
+    }
+
+    res.sendFile(flyerFullPath);
+  } catch (error) {
+    console.error('Error fetching flyer:', error);
+    res.status(500).json({ error: 'Failed to fetch flyer' });
+  }
+});
+
+// POST new budget with optional flyer upload
+app.post('/api/budgets', upload.single('flyer'), async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+    
+    const { csv, name, venueName, date } = req.body;
 
     if (!csv || !name || !date) {
       return res.status(400).json({ error: 'Missing required fields: csv, name, date' });
@@ -130,17 +201,32 @@ app.post('/api/budgets', async (req, res) => {
     const budget = {
       id,
       name,
+      venueName: venueName || '',
       date,
       csv,
       createdAt: new Date().toISOString()
     };
 
+    // Add flyer path if file was uploaded
+    if (req.file) {
+      budget.flyerPath = `uploads/${req.file.filename}`;
+      budget.flyerOriginalName = req.file.originalname;
+    }
+
     await db.collection('budgets').insertOne(budget);
 
-    console.log(`✅ Budget saved: ${name} (${id})`);
+    console.log(`✅ Budget saved: ${name} (${id})${req.file ? ' with flyer' : ''}`);
     res.json({ id, message: 'Budget saved successfully' });
   } catch (error) {
     console.error('❌ Save error:', error);
+    
+    // Clean up uploaded file if database save failed
+    if (req.file) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Failed to delete orphaned file:', err);
+      });
+    }
+    
     res.status(500).json({ error: 'Failed to save budget' });
   }
 });
@@ -154,15 +240,31 @@ app.delete('/api/budgets/:id', async (req, res) => {
 
     const param = req.params.id;
 
-    // Prefer deleting by custom id; fallback to _id if needed
+    // Find the budget first to get flyer path
+    let budget = await db.collection('budgets').findOne({ id: param });
+    
+    if (!budget && ObjectId.isValid(param)) {
+      budget = await db.collection('budgets').findOne({ _id: new ObjectId(param) });
+    }
+
+    if (!budget) {
+      return res.status(404).json({ error: 'Budget not found' });
+    }
+
+    // Delete the flyer file if it exists
+    if (budget.flyerPath) {
+      const flyerFullPath = path.join(__dirname, budget.flyerPath);
+      if (fs.existsSync(flyerFullPath)) {
+        fs.unlinkSync(flyerFullPath);
+        console.log(`🗑️  Deleted flyer: ${budget.flyerPath}`);
+      }
+    }
+
+    // Delete from database
     let result = await db.collection('budgets').deleteOne({ id: param });
 
     if (result.deletedCount === 0 && ObjectId.isValid(param)) {
       result = await db.collection('budgets').deleteOne({ _id: new ObjectId(param) });
-    }
-
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Budget not found' });
     }
 
     console.log(`🗑️  Budget deleted: ${param}`);
@@ -192,6 +294,7 @@ async function startServer() {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`📡 Health check: http://localhost:${PORT}/api`);
     console.log(`🌐 Frontend: http://localhost:${PORT}/`);
+    console.log(`📁 Uploads directory: ${uploadsDir}`);
     if (dbConnected) {
       console.log('🗄️  MongoDB: Connected and ready');
     } else {
