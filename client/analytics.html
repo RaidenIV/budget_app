@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Budget Analytics - All Events</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ======= MENU NAV (hamburger) ======= */
+    /* ======= NAVIGATION MENU ======= */
     .nav-dropdown{
       position:fixed;
       top:18px;
@@ -95,6 +95,43 @@
     .nav-menu a:hover{
       background: rgba(0,153,255,0.12);
       color: #0099ff;
+    }
+
+    /* ======= BACK BUTTON ======= */
+    .back-button {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .back-button:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    /* ======= PAGE HEADER WITH TITLE AND BACK BUTTON ======= */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: 2rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .analytics-header {
@@ -200,9 +237,21 @@
 
     .charts-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 2rem;
       margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1200px) {
+      .charts-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .charts-container {
+        grid-template-columns: 1fr;
+      }
     }
 
     .chart-card {
@@ -210,6 +259,9 @@
       padding: 1.5rem;
       border-radius: 12px;
       border: 2px solid var(--border);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     .chart-card h2 {
@@ -221,6 +273,7 @@
     .chart-wrapper {
       position: relative;
       height: 400px;
+      flex: 1;
     }
 
     .loading {
@@ -234,10 +287,20 @@
       padding: 1.5rem;
       border-radius: 12px;
       border: 2px solid var(--border);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     .event-list h2 {
       margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      text-align: center;
+    }
+
+    #eventsList {
+      overflow-y: auto;
+      flex: 1;
     }
 
     .event-item {
@@ -289,8 +352,13 @@
   </div>
 
   <div class="container">
-    <div class="analytics-header">
+    <!-- Page Header with Title and Back Button -->
+    <div class="page-header">
       <h1>📊 Budget Analytics</h1>
+      <a href="index.html" class="back-button">← Back to Budget View</a>
+    </div>
+
+    <div class="analytics-header">
       <div class="time-filter">
         <button id="btnAllTime" class="active" onclick="setTimeFilter('all')">All Time</button>
         <button id="btnYear" onclick="setTimeFilter('year')">This Year</button>
@@ -348,6 +416,7 @@
       </div>
 
       <div class="charts-container">
+        <!-- Column 1: Expenses Chart -->
         <div class="chart-card">
           <h2>Aggregated Expenses by Category</h2>
           <div class="chart-wrapper">
@@ -355,6 +424,13 @@
           </div>
         </div>
 
+        <!-- Column 2: Events List -->
+        <div class="event-list">
+          <h2>Events in Selected Period</h2>
+          <div id="eventsList"></div>
+        </div>
+
+        <!-- Column 3: Revenue Chart -->
         <div class="chart-card">
           <h2>Aggregated Revenue by Source</h2>
           <div class="chart-wrapper">
@@ -362,15 +438,10 @@
           </div>
         </div>
       </div>
-
-      <div class="event-list">
-        <h2>Events in Selected Period</h2>
-        <div id="eventsList"></div>
-      </div>
     </div>
   </div>
 
-  <script type="module" src="js/analytics.js"></script>
+  <script type="module" src="analytics.js"></script>
   
   <script>
     // Navigation menu toggle
@@ -378,15 +449,17 @@
       const navDropdown = document.getElementById('navDropdown');
       const navToggle = document.getElementById('navToggle');
       
-      navToggle.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        navDropdown.classList.toggle('active'); 
-      });
-      
-      document.addEventListener('click', () => navDropdown.classList.remove('active'));
-      document.addEventListener('keydown', (e) => { 
-        if (e.key === 'Escape') navDropdown.classList.remove('active'); 
-      });
+      if (navToggle && navDropdown) {
+        navToggle.addEventListener('click', (e) => { 
+          e.stopPropagation(); 
+          navDropdown.classList.toggle('active'); 
+        });
+        
+        document.addEventListener('click', () => navDropdown.classList.remove('active'));
+        document.addEventListener('keydown', (e) => { 
+          if (e.key === 'Escape') navDropdown.classList.remove('active'); 
+        });
+      }
     })();
   </script>
 </body>
