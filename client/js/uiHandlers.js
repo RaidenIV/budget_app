@@ -69,6 +69,32 @@ export async function handleLoadSelectedBudget() {
 
   const regenerators = buildRegenerators();
   await loadBudgetFromServer(selectedBudgetId, regenerators, updateBudget);
+  
+  // Load flyer if it exists
+  await loadBudgetFlyer(selectedBudgetId);
+}
+
+/**
+ * Load flyer for a budget
+ */
+async function loadBudgetFlyer(budgetId) {
+  try {
+    const response = await fetch(`/api/budgets/${budgetId}/flyer`);
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const image = document.getElementById('flyerImage');
+      const preview = document.getElementById('flyerPreview');
+      
+      if (image && preview) {
+        image.src = url;
+        preview.style.display = 'block';
+      }
+    }
+  } catch (error) {
+    console.log('No flyer found for this budget');
+  }
 }
 
 /**
@@ -102,6 +128,7 @@ function displaySearchResults(budgets) {
   resultsContainer.innerHTML = budgets.map(budget => `
     <div class="budget-result">
       <div><strong>${budget.name ?? 'Untitled'}</strong></div>
+      <div>${budget.venueName ? `@ ${budget.venueName}` : ''}</div>
       <div>${budget.date ?? ''}</div>
       <div class="button-row">
         <button type="button" onclick="loadBudgetById('${budget.id || budget._id}')">Load</button>
@@ -147,10 +174,13 @@ export async function deleteBudgetById(budgetId) {
 /**
  * Save current budget to server
  * CRITICAL FIX: use buildCSVString() so ALL fields are included (by element id).
+ * Also handles flyer upload.
  */
 export async function handleSaveBudgetToServer() {
   const showTitle = document.getElementById('showTitle')?.value?.trim() || '';
+  const venueName = document.getElementById('venueName')?.value?.trim() || '';
   const showDate = document.getElementById('showDate')?.value?.trim() || '';
+  const flyerInput = document.getElementById('flyerUpload');
 
   if (!showTitle) {
     alert('Please enter a show title before saving');
@@ -163,11 +193,30 @@ export async function handleSaveBudgetToServer() {
 
     const csvData = buildCSVString();
 
-    const result = await saveBudgetToServer(csvData, {
-      name: showTitle,
-      date: showDate || new Date().toISOString().split('T')[0]
+    // Create FormData for multipart upload
+    const formData = new FormData();
+    formData.append('csv', csvData);
+    formData.append('name', showTitle);
+    formData.append('venueName', venueName);
+    formData.append('date', showDate || new Date().toISOString().split('T')[0]);
+    
+    // Add flyer if present
+    if (flyerInput?.files?.[0]) {
+      formData.append('flyer', flyerInput.files[0]);
+    }
+
+    // Send as multipart/form-data
+    const response = await fetch('/api/budgets', {
+      method: 'POST',
+      body: formData
     });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to save budget');
+    }
+
+    const result = await response.json();
     console.log('Save result:', result);
 
     // Refresh selector if it exists
@@ -226,6 +275,7 @@ function displayModalBudgetList(budgets) {
   listContainer.innerHTML = budgets.map(budget => `
     <div class="modal-budget-row" onclick="loadBudgetAndCloseModal('${budget.id || budget._id}')">
       <div><strong>${budget.name ?? 'Untitled'}</strong></div>
+      <div>${budget.venueName ? `@ ${budget.venueName}` : ''}</div>
       <div>${budget.date ?? ''}</div>
     </div>
   `).join('');
