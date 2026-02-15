@@ -19,6 +19,7 @@ export const CSV_META = {
 export const FIELDS = {
   basic: {
     showTitle: { id: "showTitle", label: "Show Title", csv: "Show Title" },
+    venueName: { id: "venueName", label: "Venue Name", csv: "Venue Name" },
     showDate: { id: "showDate", label: "Show Date", csv: "Show Date" }
   },
   production: {
