@@ -300,7 +300,7 @@ function populateYearSelector() {
   if (monthSelect) monthSelect.value = new Date().getMonth() + 1;
 }
 
-export async function loadAnalytics() {
+async function loadAnalytics() {
   console.log('🔄 Loading analytics...');
   const loadingEl = document.getElementById('loadingIndicator');
   const contentEl = document.getElementById('analyticsContent');
