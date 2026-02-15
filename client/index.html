@@ -833,7 +833,7 @@
 <!-- Scripts -->
 <script type="module" src="js/main.js"></script>
 <script type="module" src="js/uiHandlers.js"></script>
-<script type="module" src="js/analytics.js"></script>
+<script src="js/analytics.js"></script>
 
 <script>
 // Navigation toggle
@@ -865,11 +865,14 @@ function toggleAnalyticsView() {
     
     // Load analytics when switching to analytics view
     if (analyticsView.classList.contains('active')) {
-        if (typeof window.loadAnalytics === 'function') {
-            window.loadAnalytics();
-        } else {
-            console.error('loadAnalytics function not found');
-        }
+        // Wait a moment for analytics.js to be fully loaded
+        setTimeout(() => {
+            if (typeof window.loadAnalytics === 'function') {
+                window.loadAnalytics();
+            } else {
+                console.error('loadAnalytics function not found - analytics.js may not be loaded');
+            }
+        }, 100);
     }
 }
 
