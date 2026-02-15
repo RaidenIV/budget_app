@@ -4,7 +4,7 @@
   "description": "Budget tracking app backend with file upload support",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server/server.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
@@ -17,3 +17,4 @@
     "nodemon": "^3.0.1"
   }
 }
+
