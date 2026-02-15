@@ -29,6 +29,7 @@ A comprehensive budget tracking application for managing event expenses and reve
 budget_app/
 ├── README.md
 ├── DEPLOYMENT_GUIDE.md
+├── package.json            # Server dependencies
 │
 ├── client/                      # Frontend application
 │   ├── index.html              # Main HTML file
@@ -47,9 +48,9 @@ budget_app/
 │           ├── repeaters.js    # Dynamic form fields
 │           └── serverLoad.js   # Server API calls
 │
-└── server/                      # Backend API
-    ├── server.js               # Express + MongoDB server
-    └── package.json            # Server dependencies
+└── server/                     # Backend API
+    └── server.js               # Express + MongoDB server
+
 ```
 
 ## Tech Stack
