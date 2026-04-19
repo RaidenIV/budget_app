@@ -157,6 +157,21 @@
     transform: translateY(-2px);
 }
 
+.analytics-card-logo {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.analytics-card-logo img {
+    height: 2.5rem;
+    width: auto;
+    display: block;
+}
+
 .analytics-header {
     text-align: center;
     padding: 1rem;
@@ -213,12 +228,19 @@
 }
 
 .month-year-selector select {
-    padding: 0.75rem;
+    padding: 0.75rem 2.4rem 0.75rem 0.75rem;
     border: 2px solid var(--line);
     background: var(--input-bg);
     color: var(--text);
     border-radius: 8px;
     cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+    background-position: calc(100% - 14px) 50%;
 }
 
 .stats-grid {
@@ -754,11 +776,12 @@
             </button>
         </div>
         
+        <div class="analytics-card-logo">
+            <img src="https://images.squarespace-cdn.com/content/v1/681ea18dd168a935c26295bd/c311da3d-6fbf-446a-858c-227fa011e7e3/Xodia+MEDIA+Group+%28TRANS%29+%281%29+%281%29.png?format=750w" alt="Xodia Media Group Logo">
+        </div>
+
         <div class="analytics-header">
-            <h1 style="color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 1rem;">
-                Aggregated Budget Analytics
-                <img src="https://images.squarespace-cdn.com/content/v1/681ea18dd168a935c26295bd/c311da3d-6fbf-446a-858c-227fa011e7e3/Xodia+MEDIA+Group+%28TRANS%29+%281%29+%281%29.png?format=750w" alt="Xodia Media Group Logo" style="height: 2.5rem; width: auto;">
-            </h1>
+            <h1 style="color: #ffffff;">Aggregated Budget Analytics</h1>
             
             <!-- Stats integrated into header -->
             <div class="stats-inline">
