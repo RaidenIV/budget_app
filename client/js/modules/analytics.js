@@ -180,7 +180,7 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
     return chart;
   }
   return new Chart(ctx, {
-    type: 'pie',
+    type: 'doughnut',
     data: {
       labels: filteredLabels,
       datasets: [{ data: filteredValues, backgroundColor: filteredColors, borderColor: 'transparent', borderWidth: 2 }]
@@ -188,6 +188,7 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      cutout: '58%',
       plugins: {
         legend: {
           position: 'bottom',

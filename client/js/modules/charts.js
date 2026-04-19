@@ -132,7 +132,7 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
 
   if (!existingChart) {
     const chart = new Chart(canvas.getContext("2d"), {
-      type: "pie",
+      type: "doughnut",
       data: {
         labels,
         datasets: [{ 
@@ -145,6 +145,7 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: "58%",
         plugins: {
           legend: {
             position: "bottom",
