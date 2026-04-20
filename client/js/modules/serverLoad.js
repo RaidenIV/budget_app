@@ -14,7 +14,10 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
   const statusEl = document.getElementById('loadStatus');
 
   try {
-    if (statusEl) statusEl.textContent = 'Loading budget...';
+    if (statusEl) {
+      statusEl.textContent = 'Loading budget...';
+      statusEl.classList.remove('success', 'error');
+    }
 
     console.log('Fetching budget:', budgetId);
     const response = await fetch(`${API_BASE}/api/budgets/${budgetId}`);
@@ -46,13 +49,21 @@ export async function loadBudgetFromServer(budgetId, regenerators, updateBudgetF
 
     if (statusEl) {
       statusEl.textContent = 'Budget loaded successfully!';
-      setTimeout(() => statusEl.textContent = '', 3000);
+      statusEl.classList.remove('error');
+      statusEl.classList.add('success');
+      setTimeout(() => {
+        statusEl.textContent = '';
+        statusEl.classList.remove('success', 'error');
+      }, 3000);
     }
 
   } catch (error) {
     console.error('Error loading budget:', error);
-    if (statusEl) statusEl.textContent = `Error: ${error.message}`;
-    alert(`Failed to load budget: ${error.message}`);
+    if (statusEl) {
+      statusEl.textContent = `Failed to load budget: ${error.message}`;
+      statusEl.classList.remove('success');
+      statusEl.classList.add('error');
+    }
   }
 }
 

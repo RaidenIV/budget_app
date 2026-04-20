@@ -145,7 +145,7 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: "58%",
+        cutout: "54%",
         plugins: {
           legend: {
             position: "bottom",

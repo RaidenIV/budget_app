@@ -15,6 +15,14 @@ import { buildCSVString } from './modules/csv.js';
 // Store currently selected budget ID
 let selectedBudgetId = null;
 
+function setInlineLoadStatus(message = '', type = '') {
+  const statusEl = document.getElementById('loadStatus');
+  if (!statusEl) return;
+  statusEl.textContent = message;
+  statusEl.classList.remove('success', 'error');
+  if (type) statusEl.classList.add(type);
+}
+
 /**
  * Initialize the budget selector dropdown
  */
@@ -155,7 +163,7 @@ export async function handleSaveBudgetToServer() {
   const showDate = document.getElementById('showDate')?.value?.trim() || '';
 
   if (!showTitle) {
-    alert('Please enter a show title before saving');
+    setInlineLoadStatus('Please enter a show title before saving', 'error');
     return;
   }
 
@@ -185,9 +193,10 @@ export async function handleSaveBudgetToServer() {
       }
     }
 
-    alert('Budget saved to server successfully!');
+    setInlineLoadStatus('Budget saved successfully!', 'success');
+    setTimeout(() => setInlineLoadStatus(''), 3000);
   } catch (error) {
-    alert('Failed to save budget: ' + error.message);
+    setInlineLoadStatus('Failed to save budget: ' + error.message, 'error');
     console.error('Save error:', error);
   }
 }

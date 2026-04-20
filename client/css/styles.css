@@ -17,6 +17,12 @@
     --top-ui-height: 48px;
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 
 /* ----------------------------------------------------------
    GLOBAL PAGE STYLE
@@ -28,13 +34,14 @@ html, body {
     background: var(--bg);
     font-family: 'Rajdhani', sans-serif;
     color: var(--text);
+    overflow-x: hidden;
 }
 
 .page-wrapper {
     width: 100%;
-    max-width: 1700px;
+    max-width: 1800px;
     margin: 0 auto;
-    padding: 25px 30px;
+    padding: 92px 18px 26px;
 }
 
 /* ----------------------------------------------------------
@@ -60,8 +67,8 @@ h2 {
 ---------------------------------------------------------- */
 .main-container {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: minmax(300px, 0.95fr) minmax(420px, 1.1fr) minmax(300px, 0.95fr);
+    gap: 18px;
     align-items: start;
 }
 
@@ -367,13 +374,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .server-load-section select {
     width: 100%;
-    max-width: 400px;
+    max-width: 100%;
     margin: 10px 0;
 }
 
 .load-status {
-    display: inline-block;
-    margin-left: 10px;
+    display: block;
+    margin: 12px 0 0;
+    min-height: 1.25rem;
     font-size: 14px;
     color: var(--muted);
 }
@@ -416,6 +424,46 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 14px;
     opacity: 0.85;
     color: var(--muted);
+}
+
+.page-brand-logo {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 9500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: rgba(26, 26, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.page-brand-logo img {
+  display: block;
+  height: 40px;
+  width: auto;
+  max-width: min(210px, 24vw);
+}
+
+@media (max-width: 900px) {
+  .page-brand-logo {
+    top: 14px;
+    right: 14px;
+    padding: 6px 10px;
+  }
+
+  .page-brand-logo img {
+    height: 32px;
+    max-width: 42vw;
+  }
+
+  .page-wrapper {
+    padding-top: 78px;
+  }
 }
 
 /* ----------------------------------------------------------
@@ -779,3 +827,11 @@ form .quantity-row + .collapsible {
     margin-top: var(--card-gap);
 }
 
+
+
+@media (max-width: 1600px) {
+    .main-container {
+        grid-template-columns: minmax(270px, 0.95fr) minmax(380px, 1.08fr) minmax(270px, 0.95fr);
+        gap: 16px;
+    }
+}

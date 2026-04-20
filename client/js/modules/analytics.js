@@ -188,7 +188,7 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '58%',
+      cutout: '54%',
       plugins: {
         legend: {
           position: 'bottom',

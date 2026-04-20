@@ -9,6 +9,41 @@ export function updateTextPreview(data = {}) {
   const sectionTotal = (rows) =>
     (rows || []).reduce((sum, r) => sum + (r && typeof r.value === "number" ? (+r.value || 0) : 0), 0);
 
+  const isVisibleMoney = (value) => Math.abs(+value || 0) > 0.004;
+  const moneyRow = (label, value) => isVisibleMoney(value) ? { label, value: +value || 0 } : null;
+  const compactRows = (rows = []) => {
+    const cleaned = [];
+
+    for (const row of rows) {
+      if (!row) continue;
+
+      if (row.type === "blank") {
+        if (cleaned.length && cleaned[cleaned.length - 1].type !== "blank") cleaned.push(row);
+        continue;
+      }
+
+      if (row.type === "heading") {
+        cleaned.push(row);
+        continue;
+      }
+
+      if (row.type === "text") {
+        if (String(row.text || "").trim()) cleaned.push(row);
+        continue;
+      }
+
+      if (typeof row.value === "number" && isVisibleMoney(row.value)) cleaned.push(row);
+    }
+
+    while (cleaned.length && cleaned[cleaned.length - 1].type === "blank") cleaned.pop();
+
+    return cleaned.filter((row, index, arr) => {
+      if (row.type !== "heading") return true;
+      const next = arr[index + 1];
+      return !!next && next.type !== "heading";
+    });
+  };
+
   const MIN_LABEL_COL = 32;
   const MONEY_COL = 12;
 
@@ -20,54 +55,56 @@ export function updateTextPreview(data = {}) {
 
   const sections = [];
 
-  // HEADLINERS
   const headlinerRows = [];
   const nHead = +document.getElementById("numHeadliners")?.value || 0;
   for (let i = 1; i <= nHead; i++) {
     const name = getStr(`headliner_name_${i}`) || `Headliner ${i}`;
-    headlinerRows.push({ label: `${name} Fee:`, value: getNum(`headliner_fee_${i}`) });
-    headlinerRows.push({ label: `${name} Hotel:`, value: getNum(`headliner_hotel_${i}`) });
-    headlinerRows.push({ label: `${name} Rider:`, value: getNum(`headliner_rider_${i}`) });
+    [
+      moneyRow(`${name} Fee:`, getNum(`headliner_fee_${i}`)),
+      moneyRow(`${name} Hotel:`, getNum(`headliner_hotel_${i}`)),
+      moneyRow(`${name} Rider:`, getNum(`headliner_rider_${i}`)),
+    ].filter(Boolean).forEach(row => headlinerRows.push(row));
   }
   if (headlinerRows.length) sections.push({ title: "Headliners", rows: headlinerRows });
 
-  // SUPPORT - UPDATED to include Direct Support name, fee, hotel, rider
   const supportRows = [];
-  
-  // Direct Support with name, fee, hotel, rider
   const directSupportName = getStr("directSupportName") || "Direct Support";
-  supportRows.push({ label: `${directSupportName} Fee:`, value: getNum("directSupport") });
-  supportRows.push({ label: `${directSupportName} Hotel:`, value: getNum("directSupportHotel") });
-  supportRows.push({ label: `${directSupportName} Rider:`, value: getNum("directSupportRider") });
-  
-  // Local DJs
+  [
+    moneyRow(`${directSupportName} Fee:`, getNum("directSupport")),
+    moneyRow(`${directSupportName} Hotel:`, getNum("directSupportHotel")),
+    moneyRow(`${directSupportName} Rider:`, getNum("directSupportRider")),
+  ].filter(Boolean).forEach(row => supportRows.push(row));
+
   const nLocal = +document.getElementById("numLocalDJs")?.value || 0;
   for (let i = 1; i <= nLocal; i++) {
     const name = getStr(`localDJ_name_${i}`) || `Local DJ ${i}`;
-    supportRows.push({ label: `${name} Fee:`, value: getNum(`localDJ_fee_${i}`) });
+    const fee = moneyRow(`${name} Fee:`, getNum(`localDJ_fee_${i}`));
+    if (fee) supportRows.push(fee);
   }
-  sections.push({ title: "Support", rows: supportRows });
+  if (supportRows.length) sections.push({ title: "Support", rows: supportRows });
 
-  // PRODUCTION
   const productionRows = [
-    { label: "VJ Fee:", value: getNum("vjFee") },
-    { label: "Venue:", value: getNum("venue") },
-    { label: "LED Wall:", value: getNum("ledWall") },
-    { label: "Lights:", value: getNum("lights") },
-    { label: "Lasers:", value: getNum("lasers") }
-  ];
-  sections.push({ title: "Production", rows: productionRows });
+    moneyRow("VJ Fee:", getNum("vjFee")),
+    moneyRow("Venue:", getNum("venue")),
+    moneyRow("LED Wall:", getNum("ledWall")),
+    moneyRow("Lights:", getNum("lights")),
+    moneyRow("Lasers:", getNum("lasers"))
+  ].filter(Boolean);
+  if (productionRows.length) sections.push({ title: "Production", rows: productionRows });
 
-  // GEAR RENTALS
   const gearRows = [];
   const nCDJ = +document.getElementById("numCDJs")?.value || 0;
-  for (let i = 1; i <= nCDJ; i++) gearRows.push({ label: `CDJ ${i}:`, value: getNum(`cdj_fee_${i}`) });
-  gearRows.push({ label: "Mixer:", value: getNum("mixer") });
-  gearRows.push({ label: "Sound:", value: getNum("sound") });
-  gearRows.push({ label: "Table:", value: getNum("table") });
-  sections.push({ title: "Gear Rentals", rows: gearRows });
+  for (let i = 1; i <= nCDJ; i++) {
+    const row = moneyRow(`CDJ ${i}:`, getNum(`cdj_fee_${i}`));
+    if (row) gearRows.push(row);
+  }
+  [
+    moneyRow("Mixer:", getNum("mixer")),
+    moneyRow("Sound:", getNum("sound")),
+    moneyRow("Table:", getNum("table"))
+  ].filter(Boolean).forEach(row => gearRows.push(row));
+  if (gearRows.length) sections.push({ title: "Gear Rentals", rows: gearRows });
 
-  // MARKETING
   const hasFbSplit = !!document.getElementById("facebookAdsXodia") || !!document.getElementById("facebookAdsSpaceCampHQ");
   const hasIgSplit = !!document.getElementById("instagramAdsXodia") || !!document.getElementById("instagramAdsSpaceCampHQ");
 
@@ -76,45 +113,47 @@ export function updateTextPreview(data = {}) {
   const igX = hasIgSplit ? getNum("instagramAdsXodia") : getNum("instagramAds");
   const igS = hasIgSplit ? getNum("instagramAdsSpaceCampHQ") : 0;
 
-  const marketingRows = [
-    { type: "heading", text: "Facebook Ads" },
-    { label: "XODIA:", value: fbX },
-    { label: "SPACE CAMP HQ:", value: fbS },
-    { type: "blank" },
-    { type: "heading", text: "Instagram Ads" },
-    { label: "XODIA:", value: igX },
-    { label: "SPACE CAMP HQ:", value: igS },
-    { type: "blank" },
-    { label: "Physical Flyers:", value: getNum("physicalFlyers") },
-    { label: "Eventbrite Ads:", value: getNum("eventbriteAds") },
-  ];
-  sections.push({ title: "Marketing", rows: marketingRows });
+  const marketingRows = [];
+  const fbRows = [moneyRow("XODIA:", fbX), moneyRow("SPACE CAMP HQ:", fbS)].filter(Boolean);
+  if (fbRows.length) marketingRows.push({ type: "heading", text: "Facebook Ads" }, ...fbRows, { type: "blank" });
+  const igRows = [moneyRow("XODIA:", igX), moneyRow("SPACE CAMP HQ:", igS)].filter(Boolean);
+  if (igRows.length) marketingRows.push({ type: "heading", text: "Instagram Ads" }, ...igRows, { type: "blank" });
+  [
+    moneyRow("Physical Flyers:", getNum("physicalFlyers")),
+    moneyRow("Eventbrite Ads:", getNum("eventbriteAds")),
+  ].filter(Boolean).forEach(row => marketingRows.push(row));
+  const compactMarketingRows = compactRows(marketingRows);
+  if (compactMarketingRows.length) sections.push({ title: "Marketing", rows: compactMarketingRows });
 
-  // STAFF
   const staffRows = [
-    { label: "Door Staff:", value: getNum("doorStaff") },
-    { label: "Merch Table:", value: getNum("merchTable") },
-    { label: "Transportation:", value: getNum("transportation") },
-  ];
+    moneyRow("Door Staff:", getNum("doorStaff")),
+    moneyRow("Merch Table:", getNum("merchTable")),
+    moneyRow("Transportation:", getNum("transportation")),
+  ].filter(Boolean);
   const nRunners = +document.getElementById("numShowRunners")?.value || 0;
-  for (let i = 1; i <= nRunners; i++) staffRows.push({ label: `Show Runner ${i}:`, value: getNum(`showRunner_fee_${i}`) });
-  sections.push({ title: "Staff", rows: staffRows });
+  for (let i = 1; i <= nRunners; i++) {
+    const row = moneyRow(`Show Runner ${i}:`, getNum(`showRunner_fee_${i}`));
+    if (row) staffRows.push(row);
+  }
+  if (staffRows.length) sections.push({ title: "Staff", rows: staffRows });
 
-  // OTHER CATEGORIES
   const otherRows = [];
   const nOtherCats = +document.getElementById("numOtherCategories")?.value || 0;
   for (let c = 1; c <= nOtherCats; c++) {
     const catName = getStr(`otherCategoryName_${c}`) || `Category ${c}`;
     const count = +document.getElementById(`otherCategoryCount_${c}`)?.value || 0;
+    const categoryRows = [];
 
-    otherRows.push({ type: "heading", text: catName });
     for (let i = 1; i <= count; i++) {
       const itemName = getStr(`otherCategory_${c}_itemName_${i}`) || `Item ${i}`;
-      otherRows.push({ label: `${itemName}:`, value: getNum(`otherCategory_${c}_itemFee_${i}`) });
+      const row = moneyRow(`${itemName}:`, getNum(`otherCategory_${c}_itemFee_${i}`));
+      if (row) categoryRows.push(row);
     }
-    otherRows.push({ type: "blank" });
+
+    if (categoryRows.length) otherRows.push({ type: "heading", text: catName }, ...categoryRows, { type: "blank" });
   }
-  if (otherRows.length) sections.push({ title: "Other", rows: otherRows });
+  const compactOtherRows = compactRows(otherRows);
+  if (compactOtherRows.length) sections.push({ title: "Other", rows: compactOtherRows });
 
   sections.forEach(sec => {
     consider(sec.title);
@@ -161,7 +200,6 @@ export function updateTextPreview(data = {}) {
   lines.push(fmtRow("TOTAL EXPENSES:", totalExpenses));
   lines.push("");
 
-  // REVENUE
   const merchVendorTotal = (() => {
     const n = +document.getElementById("numMerchVendors")?.value || 0;
     let t = 0;
@@ -170,13 +208,13 @@ export function updateTextPreview(data = {}) {
   })();
 
   const revenueRows = [
-    { label: "Eventbrite Sales:", value: getNum("eventbriteSales") },
-    { label: "DJ Presales:", value: getNum("djPresales") },
-    { label: "Promo Team:", value: getNum("promoTeam") },
-    { label: "Door Sales:", value: getNum("doorSales") },
-    { label: "Merch Sold:", value: getNum("merchSold") },
-    { label: "Merch Vendors:", value: merchVendorTotal },
-  ];
+    moneyRow("Eventbrite Sales:", getNum("eventbriteSales")),
+    moneyRow("DJ Presales:", getNum("djPresales")),
+    moneyRow("Promo Team:", getNum("promoTeam")),
+    moneyRow("Door Sales:", getNum("doorSales")),
+    moneyRow("Merch Sold:", getNum("merchSold")),
+    moneyRow("Merch Vendors:", merchVendorTotal),
+  ].filter(Boolean);
 
   revenueRows.forEach(r => consider(r.label || ""));
 
