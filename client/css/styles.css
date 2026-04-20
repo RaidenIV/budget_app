@@ -37,6 +37,45 @@ html, body {
     overflow-x: hidden;
 }
 
+/* Prevent an insertion caret from appearing on static UI text */
+body {
+    caret-color: transparent;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"],
+#textPreview,
+#textPreview * {
+    caret-color: auto;
+}
+
+/* Keep static titles and display-only sections from acting like editable text */
+h1, h2, h3, h4, h5, h6,
+label,
+p,
+span,
+.summary-title,
+#summary,
+#summary p,
+.charts-title,
+.chart-subtitle,
+.stat-card,
+.stat-label,
+.stat-value,
+.stat-subtext,
+.stat-inline-item,
+.stat-inline-label,
+.stat-inline-value,
+.collapsible-header,
+.server-load-section h3,
+.page-brand-logo,
+.analytics-header {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 .page-wrapper {
     width: 100%;
     max-width: 1800px;
