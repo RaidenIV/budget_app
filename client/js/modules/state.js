@@ -49,6 +49,7 @@ export const FIELDS = {
   },
   sales: {
     eventbriteSales: { id: "eventbriteSales", label: "Eventbrite Sales", csv: "Eventbrite Sales" },
+    poshSales: { id: "poshSales", label: "Posh", csv: "Posh" },
     djPresales: { id: "djPresales", label: "DJ Presales", csv: "DJ Presales" },
     promoTeam: { id: "promoTeam", label: "Promo Team", csv: "Promo Team" },
     doorSales: { id: "doorSales", label: "Door Sales", csv: "Door Sales" },

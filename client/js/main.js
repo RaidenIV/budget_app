@@ -46,6 +46,7 @@ export function updateBudget() {
     },
     {
       Eventbrite: budgetData.revenue.Eventbrite,
+      Posh: budgetData.revenue.Posh,
       Presales: budgetData.revenue.Presales,
       Promo: budgetData.revenue.Promo,
       Door: budgetData.revenue.Door,

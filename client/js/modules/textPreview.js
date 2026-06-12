@@ -209,6 +209,7 @@ export function updateTextPreview(data = {}) {
 
   const revenueRows = [
     moneyRow("Eventbrite Sales:", getNum("eventbriteSales")),
+    moneyRow("Posh:", getNum("poshSales")),
     moneyRow("DJ Presales:", getNum("djPresales")),
     moneyRow("Promo Team:", getNum("promoTeam")),
     moneyRow("Door Sales:", getNum("doorSales")),

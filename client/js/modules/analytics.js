@@ -10,7 +10,7 @@ let expensesChart = null;
 let revenueChart = null;
 
 const EXP_COLORS = ["#FF6384", "#36A2EB", "#FFCE56", "#8BC34A", "#9C27B0", "#FF9800", "#607D8B"];
-const REV_COLORS = ["#4CAF50", "#03A9F4", "#FFC107", "#E91E63", "#9E9E9E", "#00BCD4"];
+const REV_COLORS = ["#4CAF50", "#03A9F4", "#FFC107", "#E91E63", "#9E9E9E", "#00BCD4", "#8BC34A"];
 const CHART_TEXT = "#ffffff";
 
 // Set Chart.js global defaults for text color
@@ -79,6 +79,7 @@ function calculateBudgetFromData(data) {
     }
   }
   const eventbriteSales = getNum('eventbriteSales');
+  const poshSales = getNum('poshSales');
   const djPresales = getNum('djPresales');
   const promoTeam = getNum('promoTeam');
   const doorSales = getNum('doorSales');
@@ -99,6 +100,7 @@ function calculateBudgetFromData(data) {
   };
   const revenue = {
     Eventbrite: eventbriteSales,
+    Posh: poshSales,
     Presales: djPresales,
     Promo: promoTeam,
     Door: doorSales,
@@ -141,7 +143,7 @@ function filterBudgetsByDate(budgets, filter) {
 function aggregateData(budgets) {
   const aggregated = {
     expenses: { Headliners: 0, Support: 0, Production: 0, Gear: 0, Marketing: 0, Staff: 0, Other: 0 },
-    revenue: { Eventbrite: 0, Presales: 0, Promo: 0, Door: 0, 'Merch Sold': 0, 'Merch Vendors': 0 },
+    revenue: { Eventbrite: 0, Posh: 0, Presales: 0, Promo: 0, Door: 0, 'Merch Sold': 0, 'Merch Vendors': 0 },
     totalExpenses: 0,
     totalRevenue: 0,
     totalProfit: 0,

@@ -83,7 +83,7 @@ function tooltipLabel(ctx) {
 }
 
 const EXP_COLORS = ["#FF6384", "#36A2EB", "#FFCE56", "#8BC34A", "#9C27B0", "#FF9800", "#607D8B"];
-const REV_COLORS = ["#4CAF50", "#03A9F4", "#FFC107", "#E91E63", "#9E9E9E"];
+const REV_COLORS = ["#4CAF50", "#03A9F4", "#FFC107", "#E91E63", "#9E9E9E", "#00BCD4", "#8BC34A"];
 
 // Dark-mode text colors for Chart.js UI (legend/tooltip/etc.)
 const CHART_TEXT = "#ffffff";

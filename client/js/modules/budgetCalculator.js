@@ -94,6 +94,7 @@ export function calculateBudget() {
 
   // Calculate revenue
   const eventbriteSales = getNum("eventbriteSales");
+  const poshSales = getNum("poshSales");
   const djPresales = getNum("djPresales");
   const promoTeam = getNum("promoTeam");
   const doorSales = getNum("doorSales");
@@ -106,6 +107,7 @@ export function calculateBudget() {
 
   const totalRevenue =
     eventbriteSales +
+    poshSales +
     djPresales +
     promoTeam +
     doorSales +
@@ -127,6 +129,7 @@ export function calculateBudget() {
     },
     revenue: {
       Eventbrite: eventbriteSales,
+      Posh: poshSales,
       Presales: djPresales,
       Promo: promoTeam,
       Door: doorSales,
