@@ -70,6 +70,7 @@ function calculateBudgetFromData(data) {
     showRunnerTotal += getNum(`showRunner_fee_${i}`);
   }
   const staffTotal = getNum('doorStaff') + getNum('merchTable') + getNum('transportation') + showRunnerTotal;
+  const mediaTotal = getNum('photo') + getNum('video');
   let otherTotal = 0;
   const numOtherCategories = parseInt(data.numOtherCategories || 0);
   for (let c = 1; c <= numOtherCategories; c++) {
@@ -80,6 +81,7 @@ function calculateBudgetFromData(data) {
   }
   const eventbriteSales = getNum('eventbriteSales');
   const poshSales = getNum('poshSales');
+  const raffleSales = getNum('raffleSales');
   const djPresales = getNum('djPresales');
   const promoTeam = getNum('promoTeam');
   const doorSales = getNum('doorSales');
@@ -96,11 +98,13 @@ function calculateBudgetFromData(data) {
     Gear: gearTotal,
     Marketing: marketingTotal,
     Staff: staffTotal,
+    Media: mediaTotal,
     Other: otherTotal
   };
   const revenue = {
     Eventbrite: eventbriteSales,
     Posh: poshSales,
+    Raffle: raffleSales,
     Presales: djPresales,
     Promo: promoTeam,
     Door: doorSales,
@@ -142,8 +146,8 @@ function filterBudgetsByDate(budgets, filter) {
 
 function aggregateData(budgets) {
   const aggregated = {
-    expenses: { Headliners: 0, Support: 0, Production: 0, Gear: 0, Marketing: 0, Staff: 0, Other: 0 },
-    revenue: { Eventbrite: 0, Posh: 0, Presales: 0, Promo: 0, Door: 0, 'Merch Sold': 0, 'Merch Vendors': 0 },
+    expenses: { Headliners: 0, Support: 0, Production: 0, Gear: 0, Marketing: 0, Staff: 0, Media: 0, Other: 0 },
+    revenue: { Eventbrite: 0, Posh: 0, Raffle: 0, Presales: 0, Promo: 0, Door: 0, 'Merch Sold': 0, 'Merch Vendors': 0 },
     totalExpenses: 0,
     totalRevenue: 0,
     totalProfit: 0,

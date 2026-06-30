@@ -42,11 +42,13 @@ export function updateBudget() {
       Gear: budgetData.expenses.Gear,
       Marketing: budgetData.expenses.Marketing,
       Staff: budgetData.expenses.Staff,
+      Media: budgetData.expenses.Media,
       Other: budgetData.expenses.Other
     },
     {
       Eventbrite: budgetData.revenue.Eventbrite,
       Posh: budgetData.revenue.Posh,
+      Raffle: budgetData.revenue.Raffle,
       Presales: budgetData.revenue.Presales,
       Promo: budgetData.revenue.Promo,
       Door: budgetData.revenue.Door,

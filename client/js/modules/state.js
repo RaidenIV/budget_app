@@ -47,9 +47,14 @@ export const FIELDS = {
     merchTable: { id: "merchTable", label: "Merch Table", csv: "Merch Table" },
     transportation: { id: "transportation", label: "Transportation", csv: "Transportation" }
   },
+  media: {
+    photo: { id: "photo", label: "Photo", csv: "Photo" },
+    video: { id: "video", label: "Video", csv: "Video" }
+  },
   sales: {
     eventbriteSales: { id: "eventbriteSales", label: "Eventbrite Sales", csv: "Eventbrite Sales" },
     poshSales: { id: "poshSales", label: "Posh", csv: "Posh" },
+    raffleSales: { id: "raffleSales", label: "Raffle", csv: "Raffle" },
     djPresales: { id: "djPresales", label: "DJ Presales", csv: "DJ Presales" },
     promoTeam: { id: "promoTeam", label: "Promo Team", csv: "Promo Team" },
     doorSales: { id: "doorSales", label: "Door Sales", csv: "Door Sales" },

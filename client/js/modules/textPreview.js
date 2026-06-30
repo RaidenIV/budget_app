@@ -137,6 +137,12 @@ export function updateTextPreview(data = {}) {
   }
   if (staffRows.length) sections.push({ title: "Staff", rows: staffRows });
 
+  const mediaRows = [
+    moneyRow("Photo:", getNum("photo")),
+    moneyRow("Video:", getNum("video")),
+  ].filter(Boolean);
+  if (mediaRows.length) sections.push({ title: "Media", rows: mediaRows });
+
   const otherRows = [];
   const nOtherCats = +document.getElementById("numOtherCategories")?.value || 0;
   for (let c = 1; c <= nOtherCats; c++) {
@@ -210,6 +216,7 @@ export function updateTextPreview(data = {}) {
   const revenueRows = [
     moneyRow("Eventbrite Sales:", getNum("eventbriteSales")),
     moneyRow("Posh:", getNum("poshSales")),
+    moneyRow("Raffle:", getNum("raffleSales")),
     moneyRow("DJ Presales:", getNum("djPresales")),
     moneyRow("Promo Team:", getNum("promoTeam")),
     moneyRow("Door Sales:", getNum("doorSales")),

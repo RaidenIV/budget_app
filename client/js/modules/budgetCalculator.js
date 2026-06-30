@@ -72,6 +72,9 @@ export function calculateBudget() {
     getNum("transportation") +
     showRunnerTotal;
 
+  // Calculate media
+  const mediaTotal = getNum("photo") + getNum("video");
+
   // Calculate other categories
   let otherTotal = 0;
   const numOtherCategories = +document.getElementById("numOtherCategories")?.value || 0;
@@ -90,11 +93,13 @@ export function calculateBudget() {
     gearTotal +
     marketingTotal +
     staffTotal +
+    mediaTotal +
     otherTotal;
 
   // Calculate revenue
   const eventbriteSales = getNum("eventbriteSales");
   const poshSales = getNum("poshSales");
+  const raffleSales = getNum("raffleSales");
   const djPresales = getNum("djPresales");
   const promoTeam = getNum("promoTeam");
   const doorSales = getNum("doorSales");
@@ -108,6 +113,7 @@ export function calculateBudget() {
   const totalRevenue =
     eventbriteSales +
     poshSales +
+    raffleSales +
     djPresales +
     promoTeam +
     doorSales +
@@ -124,12 +130,14 @@ export function calculateBudget() {
       Gear: gearTotal,
       Marketing: marketingTotal,
       Staff: staffTotal,
+      Media: mediaTotal,
       Other: otherTotal,
       total: totalExpenses
     },
     revenue: {
       Eventbrite: eventbriteSales,
       Posh: poshSales,
+      Raffle: raffleSales,
       Presales: djPresales,
       Promo: promoTeam,
       Door: doorSales,

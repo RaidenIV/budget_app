@@ -669,6 +669,21 @@
         </div>
 
         <!-- -------------------------
+            COLLAPSIBLE: MEDIA
+        -------------------------- -->
+        <div class="collapsible" id="col_media">
+            <div class="collapsible-header" onclick="toggleCollapse('col_media')">
+            <span class="arrow">▸</span> Media
+            </div>
+            <div class="collapsible-content">
+            <label>Photo:</label>
+            <input id="photo" type="number" step="0.01" oninput="updateBudget()">
+            <label>Video:</label>
+            <input id="video" type="number" step="0.01" oninput="updateBudget()">
+            </div>
+        </div>
+
+        <!-- -------------------------
             COLLAPSIBLE: OTHER CATEGORIES
         -------------------------- -->
         <div class="collapsible" id="col_other">
@@ -697,6 +712,8 @@
             <input id="eventbriteSales" type="number" step="0.01" oninput="updateBudget()">
             <label>Posh:</label>
             <input id="poshSales" type="number" step="0.01" oninput="updateBudget()">
+            <label>Raffle:</label>
+            <input id="raffleSales" type="number" step="0.01" oninput="updateBudget()">
             <label>DJ Presales:</label>
             <input id="djPresales" type="number" step="0.01" oninput="updateBudget()">
             <label>Promo Team:</label>

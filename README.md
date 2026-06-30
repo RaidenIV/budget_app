@@ -15,9 +15,12 @@ A comprehensive budget tracking application for managing event expenses and reve
   - Gear rentals (CDJs, mixer, sound, tables)
   - Marketing (Facebook ads, Instagram ads, flyers)
   - Staff (door, merch table, show runners, transportation)
+  - Media (photo and video)
   - Custom categories
 - 💰 **Revenue Tracking** - Track income from:
   - Eventbrite sales
+  - Posh sales
+  - Raffle sales
   - DJ presales
   - Promo team
   - Door sales
@@ -28,8 +31,6 @@ A comprehensive budget tracking application for managing event expenses and reve
 ```
 budget_app/
 ├── README.md
-├── DEPLOYMENT_GUIDE.md
-│
 ├── client/                      # Frontend application
 │   ├── index.html              # Main HTML file
 │   ├── css/
@@ -222,8 +223,10 @@ No environment variables needed! The app automatically detects:
    - Add gear rental fees
    - Set marketing budgets
    - Add staff costs
+   - Add photo and video media costs
 3. Enter revenue sources:
-   - Ticket sales from Eventbrite
+   - Ticket sales from Eventbrite or Posh
+   - Raffle sales
    - DJ presales
    - Door sales
    - Merch sales
@@ -351,8 +354,6 @@ Requires JavaScript ES6 module support.
 This project is open source and available for personal and commercial use.
 
 ## Support
-
-For deployment help, see `DEPLOYMENT_GUIDE.md`
 
 For questions or issues:
 1. Check the troubleshooting section above
