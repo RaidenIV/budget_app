@@ -73,7 +73,14 @@ export function calculateBudget() {
     showRunnerTotal;
 
   // Calculate media
-  const mediaTotal = getNum("photo") + getNum("video");
+  let mediaTotal = 0;
+  const numMedia = +document.getElementById("numMedia")?.value || 0;
+  for (let i = 1; i <= numMedia; i++) {
+    mediaTotal +=
+      (+document.getElementById(`media_photo_${i}`)?.value || 0) +
+      (+document.getElementById(`media_video_${i}`)?.value || 0) +
+      (+document.getElementById(`media_photoVideo_${i}`)?.value || 0);
+  }
 
   // Calculate other categories
   let otherTotal = 0;

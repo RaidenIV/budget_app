@@ -137,11 +137,22 @@ export function updateTextPreview(data = {}) {
   }
   if (staffRows.length) sections.push({ title: "Staff", rows: staffRows });
 
-  const mediaRows = [
-    moneyRow("Photo:", getNum("photo")),
-    moneyRow("Video:", getNum("video")),
-  ].filter(Boolean);
-  if (mediaRows.length) sections.push({ title: "Media", rows: mediaRows });
+  const mediaRows = [];
+  const nMedia = +document.getElementById("numMedia")?.value || 0;
+  for (let i = 1; i <= nMedia; i++) {
+    const mediaName = getStr(`media_name_${i}`) || `Media ${i}`;
+    const itemRows = [
+      moneyRow("Photo:", getNum(`media_photo_${i}`)),
+      moneyRow("Video:", getNum(`media_video_${i}`)),
+      moneyRow("Photo & Video:", getNum(`media_photoVideo_${i}`)),
+    ].filter(Boolean);
+
+    if (itemRows.length) {
+      mediaRows.push({ type: "heading", text: mediaName }, ...itemRows, { type: "blank" });
+    }
+  }
+  const compactMediaRows = compactRows(mediaRows);
+  if (compactMediaRows.length) sections.push({ title: "Media", rows: compactMediaRows });
 
   const otherRows = [];
   const nOtherCats = +document.getElementById("numOtherCategories")?.value || 0;

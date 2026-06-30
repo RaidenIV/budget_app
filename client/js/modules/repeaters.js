@@ -103,6 +103,34 @@ export function regenerateShowRunners(updateBudgetFn) {
   if (updateBudgetFn) updateBudgetFn();
 }
 
+export function regenerateMedia(updateBudgetFn) {
+  const container = document.getElementById("mediaInputs");
+  const numMediaEl = document.getElementById("numMedia");
+  const old = parseInt(numMediaEl.dataset.old || 0);
+  const n = parseInt(numMediaEl.value) || 0;
+
+  storeValues(state.media, "media", old, ["name", "photo", "video", "photoVideo"]);
+  container.innerHTML = "";
+
+  for (let i = 1; i <= n; i++) {
+    container.innerHTML += `
+      <label>Name #${i}</label>
+      <input id="media_name_${i}" type="text" oninput="updateBudget()">
+      <label>Photo #${i}</label>
+      <input id="media_photo_${i}" type="number" step="0.01" oninput="updateBudget()">
+      <label>Video #${i}</label>
+      <input id="media_video_${i}" type="number" step="0.01" oninput="updateBudget()">
+      <label>Photo &amp; Video #${i}</label>
+      <input id="media_photoVideo_${i}" type="number" step="0.01" oninput="updateBudget()">
+    `;
+  }
+
+  restoreValues(state.media, "media", ["name", "photo", "video", "photoVideo"]);
+  numMediaEl.dataset.old = n;
+
+  if (updateBudgetFn) updateBudgetFn();
+}
+
 export function regenerateVendors(updateBudgetFn) {
   const container = document.getElementById("merchVendorInputs");
   const numMerchVendorsEl = document.getElementById("numMerchVendors");

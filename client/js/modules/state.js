@@ -5,6 +5,7 @@ export const state = {
   localDJs: {},
   cdjs: {},
   showRunners: {},
+  media: {},
   otherCats: {},
   vendors: {},
   chartExpenses: null,
@@ -48,8 +49,7 @@ export const FIELDS = {
     transportation: { id: "transportation", label: "Transportation", csv: "Transportation" }
   },
   media: {
-    photo: { id: "photo", label: "Photo", csv: "Photo" },
-    video: { id: "video", label: "Video", csv: "Video" }
+    numMedia: { id: "numMedia", label: "Number of Media", csv: "Number of Media" }
   },
   sales: {
     eventbriteSales: { id: "eventbriteSales", label: "Eventbrite Sales", csv: "Eventbrite Sales" },

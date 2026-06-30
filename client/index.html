@@ -676,10 +676,12 @@
             <span class="arrow">▸</span> Media
             </div>
             <div class="collapsible-content">
-            <label>Photo:</label>
-            <input id="photo" type="number" step="0.01" oninput="updateBudget()">
-            <label>Video:</label>
-            <input id="video" type="number" step="0.01" oninput="updateBudget()">
+            <div class="quantity-row">
+                <label>Number of Media:</label>
+                <input id="numMedia" type="number" min="0" max="10" value="0"
+                    onchange="regenerateMedia()">
+            </div>
+            <div id="mediaInputs"></div>
             </div>
         </div>
 
@@ -726,7 +728,7 @@
                     onchange="regenerateVendors()">
             </div>
             <div id="merchVendorInputs"></div>
-            <label>Merch Sold:</label>
+            <label>Merch Sales:</label>
             <input id="merchSold" type="number" step="0.01" oninput="updateBudget()">
             </div>
         </div>

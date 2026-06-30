@@ -70,7 +70,16 @@ function calculateBudgetFromData(data) {
     showRunnerTotal += getNum(`showRunner_fee_${i}`);
   }
   const staffTotal = getNum('doorStaff') + getNum('merchTable') + getNum('transportation') + showRunnerTotal;
-  const mediaTotal = getNum('photo') + getNum('video');
+  let mediaTotal = 0;
+  const numMedia = parseInt(data.numMedia || 0);
+  if (numMedia > 0) {
+    for (let i = 1; i <= numMedia; i++) {
+      mediaTotal += getNum(`media_photo_${i}`) + getNum(`media_video_${i}`) + getNum(`media_photoVideo_${i}`);
+    }
+  } else {
+    // Preserve analytics for budgets saved before Media became repeatable.
+    mediaTotal = getNum('photo') + getNum('video');
+  }
   let otherTotal = 0;
   const numOtherCategories = parseInt(data.numOtherCategories || 0);
   for (let c = 1; c <= numOtherCategories; c++) {

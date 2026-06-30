@@ -4,20 +4,20 @@ A comprehensive budget tracking application for managing event expenses and reve
 
 ## Features
 
-- 📊 **Real-time Budget Calculations** - Automatic calculation of expenses, revenue, and net profit
-- 📈 **Visual Charts** - Interactive pie charts for expenses and revenue breakdown
-- 💾 **Cloud Storage** - Save and load budgets from MongoDB database
-- 📤 **Export Options** - Export budgets as CSV, text files, or chart images
-- 🎯 **Category Tracking** - Track expenses across multiple categories:
+- **Real-time Budget Calculations** - Automatic calculation of expenses, revenue, and net profit
+- **Visual Charts** - Interactive pie charts for expenses and revenue breakdown
+- **Cloud Storage** - Save and load budgets from MongoDB database
+- **Export Options** - Export budgets as CSV, text files, or chart images
+- **Category Tracking** - Track expenses across multiple categories:
   - Headliners (fees, hotel, rider)
   - Support acts and local DJs
   - Production (venue, LED wall, lights, lasers, VJ)
   - Gear rentals (CDJs, mixer, sound, tables)
   - Marketing (Facebook ads, Instagram ads, flyers)
   - Staff (door, merch table, show runners, transportation)
-  - Media (photo and video)
+  - Media (repeatable named entries with photo, video, and photo & video costs)
   - Custom categories
-- 💰 **Revenue Tracking** - Track income from:
+- **Revenue Tracking** - Track income from:
   - Eventbrite sales
   - Posh sales
   - Raffle sales
@@ -163,7 +163,7 @@ In your Railway project:
    - **Name**: `MONGODB_URI`
    - **Value**: Your MongoDB connection string
 3. Add root directory (if needed):
-   - **Name**: `ROOT_DIRECTORY`  
+   - **Name**: `ROOT_DIRECTORY`
    - **Value**: `/server`
 
 #### Step 4: Deploy
@@ -223,7 +223,7 @@ No environment variables needed! The app automatically detects:
    - Add gear rental fees
    - Set marketing budgets
    - Add staff costs
-   - Add photo and video media costs
+   - Choose the media quantity, then add each name and its photo, video, or photo & video cost
 3. Enter revenue sources:
    - Ticket sales from Eventbrite or Posh
    - Raffle sales
@@ -290,32 +290,32 @@ Delete a budget
 ## Troubleshooting
 
 ### "Cannot connect to MongoDB"
-- ✅ Verify connection string is correct
-- ✅ Check password is not wrapped in `<>` brackets
-- ✅ Whitelist IP in MongoDB Atlas (use `0.0.0.0/0` for all IPs)
-- ✅ Check network firewall settings
+- Verify connection string is correct
+- Check password is not wrapped in `<>` brackets
+- Whitelist IP in MongoDB Atlas (use `0.0.0.0/0` for all IPs)
+- Check network firewall settings
 
 ### "Module not found" errors
-- ✅ Run `npm install` in server directory
-- ✅ Verify all dependencies in package.json
-- ✅ Delete `node_modules` and run `npm install` again
+- Run `npm install` in server directory
+- Verify all dependencies in package.json
+- Delete `node_modules` and run `npm install` again
 
 ### Frontend can't connect to backend
-- ✅ Check browser console for errors
-- ✅ Verify server is running (should see "✅ Server running on port 3000")
-- ✅ Check CORS is enabled (it is in the provided server.js)
-- ✅ Verify `serverLoad.js` is using the updated version
+- Check browser console for errors
+- Verify server is running (should see "Server running on port 3000")
+- Check CORS is enabled (it is in the provided server.js)
+- Verify `serverLoad.js` is using the updated version
 
 ### Charts not displaying
-- ✅ Check browser console for Chart.js errors
-- ✅ Verify Chart.js CDN is loading (check Network tab)
-- ✅ Make sure you've entered some data in the form
+- Check browser console for Chart.js errors
+- Verify Chart.js CDN is loading (check Network tab)
+- Make sure you've entered some data in the form
 
 ### Budget not saving
-- ✅ Check you've entered a show title
-- ✅ Check server logs for errors
-- ✅ Verify MongoDB connection is active
-- ✅ Check browser console for API errors
+- Check you've entered a show title
+- Check server logs for errors
+- Verify MongoDB connection is active
+- Check browser console for API errors
 
 ## Development
 
@@ -342,10 +342,10 @@ python3 -m http.server 8000
 
 ## Browser Support
 
-- Chrome 90+ ✅
-- Firefox 88+ ✅
-- Safari 14+ ✅
-- Edge 90+ ✅
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
 
 Requires JavaScript ES6 module support.
 
@@ -363,7 +363,7 @@ For questions or issues:
 
 ## Credits
 
-Built with ❤️ for event budget management
+Built for event budget management
 - Chart visualization: Chart.js
 - Icons: Unicode characters
 - Font: Rajdhani (Google Fonts)

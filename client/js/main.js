@@ -8,6 +8,7 @@ import {
   regenerateLocalDJs,
   regenerateCDJs,
   regenerateShowRunners,
+  regenerateMedia,
   regenerateVendors,
   regenerateOtherCategories,
   regenerateOtherItems
@@ -73,6 +74,7 @@ export function resetForm() {
   const numLocalDJs = document.getElementById("numLocalDJs");
   const numCDJs = document.getElementById("numCDJs");
   const numShowRunners = document.getElementById("numShowRunners");
+  const numMedia = document.getElementById("numMedia");
   const numOtherCategories = document.getElementById("numOtherCategories");
   const numMerchVendors = document.getElementById("numMerchVendors");
 
@@ -80,6 +82,7 @@ export function resetForm() {
   if (numLocalDJs) numLocalDJs.value = 0;
   if (numCDJs) numCDJs.value = 0;
   if (numShowRunners) numShowRunners.value = 0;
+  if (numMedia) numMedia.value = 0;
   if (numOtherCategories) numOtherCategories.value = 0;
   if (numMerchVendors) numMerchVendors.value = 0;
 
@@ -87,6 +90,7 @@ export function resetForm() {
   state.localDJs = {};
   state.cdjs = {};
   state.showRunners = {};
+  state.media = {};
   state.otherCats = {};
   state.vendors = {};
 
@@ -95,6 +99,7 @@ export function resetForm() {
     "localDJInputs",
     "cdjInputs",
     "showRunnerInputs",
+    "mediaInputs",
     "allOtherCategories",
     "merchVendorInputs"
   ];
@@ -136,6 +141,7 @@ function buildRegenerators() {
     localDJs: () => regenerateLocalDJs(updateBudget),
     cdjs: () => regenerateCDJs(updateBudget),
     showRunners: () => regenerateShowRunners(updateBudget),
+    media: () => regenerateMedia(updateBudget),
 
     // Merch vendors are handled by the same repeater in this codebase
     vendors: () => regenerateVendors(updateBudget),
@@ -163,6 +169,7 @@ window.regenerateHeadliners = () => regenerateHeadliners(updateBudget);
 window.regenerateLocalDJs = () => regenerateLocalDJs(updateBudget);
 window.regenerateCDJs = () => regenerateCDJs(updateBudget);
 window.regenerateShowRunners = () => regenerateShowRunners(updateBudget);
+window.regenerateMedia = () => regenerateMedia(updateBudget);
 window.regenerateVendors = () => regenerateVendors(updateBudget);
 window.regenerateOtherCategories = () => regenerateOtherCategories(updateBudget);
 window.regenerateOtherItems = (catId) => regenerateOtherItems(catId, updateBudget);

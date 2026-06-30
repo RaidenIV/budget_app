@@ -13,6 +13,7 @@ const COUNT_FIELD_IDS = [
   "numLocalDJs",
   "numCDJs",
   "numShowRunners",
+  "numMedia",
   "numOtherCategories",
   "numMerchVendors",
 ];
@@ -294,6 +295,13 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
     kv.set(rawK, rawV ?? "");
   }
 
+  // Convert the previous single Photo/Video fields into one repeatable Media entry.
+  if (!kv.has("numMedia") && (kv.has("photo") || kv.has("video"))) {
+    kv.set("numMedia", "1");
+    if (kv.has("photo")) kv.set("media_photo_1", kv.get("photo"));
+    if (kv.has("video")) kv.set("media_video_1", kv.get("video"));
+  }
+
   // Apply count fields first
   for (const id of COUNT_FIELD_IDS) {
     if (!kv.has(id)) continue;
@@ -307,6 +315,7 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
     regenerators.localDJs?.();
     regenerators.cdjs?.();
     regenerators.showRunners?.();
+    regenerators.media?.();
     regenerators.otherCategories?.();
     regenerators.vendors?.();
     regenerators.merchVendors?.();
