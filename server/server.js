@@ -8,12 +8,31 @@ const app = express();
 // IMPORTANT: Serve static files BEFORE other middleware
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
+// NOTE: origin '*' cannot be combined with credentials:true (browsers reject
+// it) - credentials removed. Token travels in the X-Admin-Token header.
 app.use(cors({
   origin: '*',
-  credentials: true
+  allowedHeaders: ['Content-Type', 'X-Admin-Token', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
+
+// --- Access token gate (same pattern as ROLODEX / DJ Database) ---
+// Set ADMIN_TOKEN in Railway to lock the API. If unset, requests pass
+// through (not recommended in production).
+function requireAccess(req, res, next) {
+  const expectedToken = String(process.env.ADMIN_TOKEN || '').trim();
+  if (!expectedToken) return next();
+
+  const authHeader = String(req.headers.authorization || '');
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const headerToken = String(req.headers['x-admin-token'] || '').trim();
+  const suppliedToken = headerToken || bearerToken;
+
+  if (suppliedToken && suppliedToken === expectedToken) return next();
+
+  return res.status(401).json({ error: 'Access token required', tokenRequired: true });
+}
 
 // MongoDB connection
 let db;
@@ -43,15 +62,19 @@ async function connectDB() {
 
 // API Routes - these must come AFTER static files
 
-// Health check
+// Health check (public - no data exposed)
 app.get('/api', (req, res) => {
   res.json({
     status: 'ok',
     message: 'Budget App Server is running',
     storage: db ? 'MongoDB (Connected)' : 'MongoDB (Not Connected)',
-    mongoConfigured: !!process.env.MONGODB_URI
+    mongoConfigured: !!process.env.MONGODB_URI,
+    tokenRequired: Boolean(String(process.env.ADMIN_TOKEN || '').trim())
   });
 });
+
+// Everything below requires the access token.
+app.use('/api/budgets', requireAccess);
 
 // GET all budgets
 app.get('/api/budgets', async (req, res) => {
@@ -80,13 +103,12 @@ app.get('/api/budgets/all-data', async (req, res) => {
       .toArray();
     res.json(budgets);
   } catch (error) {
-    console.error('Error fetching budgets with data:', error);
-    res.status(500).json({ error: 'Failed to fetch budgets' });
+    console.error('Error fetching all budget data:', error);
+    res.status(500).json({ error: 'Failed to fetch budget data' });
   }
 });
 
-
-// GET specific budget (accept custom id OR Mongo _id)
+// GET single budget by id (custom id OR Mongo _id)
 app.get('/api/budgets/:id', async (req, res) => {
   try {
     if (!db) {
@@ -94,11 +116,8 @@ app.get('/api/budgets/:id', async (req, res) => {
     }
 
     const param = req.params.id;
-
-    // 1) Try your custom "id" field first
     let budget = await db.collection('budgets').findOne({ id: param });
 
-    // 2) If not found and it looks like an ObjectId, try Mongo _id
     if (!budget && ObjectId.isValid(param)) {
       budget = await db.collection('budgets').findOne({ _id: new ObjectId(param) });
     }
@@ -107,7 +126,7 @@ app.get('/api/budgets/:id', async (req, res) => {
       return res.status(404).json({ error: 'Budget not found' });
     }
 
-    res.type('text/csv').send(budget.csv);
+    res.json(budget);
   } catch (error) {
     console.error('Error fetching budget:', error);
     res.status(500).json({ error: 'Failed to fetch budget' });
@@ -197,6 +216,9 @@ async function startServer() {
       console.log('🗄️  MongoDB: Connected and ready');
     } else {
       console.log('❌ MongoDB: Not connected - check MONGODB_URI');
+    }
+    if (!String(process.env.ADMIN_TOKEN || '').trim()) {
+      console.warn('⚠️  ADMIN_TOKEN is not set - budget API is publicly accessible');
     }
   });
 }
