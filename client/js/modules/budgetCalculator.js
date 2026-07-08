@@ -58,7 +58,8 @@ export function calculateBudget() {
     getNum("instagramAdsXodia") +
     getNum("instagramAdsSpaceCampHQ") +
     getNum("physicalFlyers") +
-    getNum("eventbriteAds");
+    getNum("eventbriteAds") +
+    getNum("collaboratorAmount");
 
   // Calculate staff
   let showRunnerTotal = 0;

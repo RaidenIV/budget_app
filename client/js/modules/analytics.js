@@ -63,7 +63,7 @@ function calculateBudgetFromData(data) {
     cdjTotal += getNum(`cdj_fee_${i}`);
   }
   const gearTotal = cdjTotal + getNum('sound') + getNum('mixer') + getNum('table');
-  const marketingTotal = getNum('facebookAdsXodia') + getNum('facebookAdsSpaceCampHQ') + getNum('instagramAdsXodia') + getNum('instagramAdsSpaceCampHQ') + getNum('physicalFlyers') + getNum('eventbriteAds');
+  const marketingTotal = getNum('facebookAdsXodia') + getNum('facebookAdsSpaceCampHQ') + getNum('instagramAdsXodia') + getNum('instagramAdsSpaceCampHQ') + getNum('physicalFlyers') + getNum('eventbriteAds') + getNum('collaboratorAmount');
   let showRunnerTotal = 0;
   const numShowRunners = parseInt(data.numShowRunners || 0);
   for (let i = 1; i <= numShowRunners; i++) {

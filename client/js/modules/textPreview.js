@@ -122,6 +122,10 @@ export function updateTextPreview(data = {}) {
     moneyRow("Physical Flyers:", getNum("physicalFlyers")),
     moneyRow("Eventbrite Ads:", getNum("eventbriteAds")),
   ].filter(Boolean).forEach(row => marketingRows.push(row));
+  const collaboratorAmount = getNum("collaboratorAmount");
+  const collaboratorName = getStr("collaboratorName") || "Collaborator";
+  const collaboratorRow = moneyRow(`${collaboratorName}:`, collaboratorAmount);
+  if (collaboratorRow) marketingRows.push({ type: "heading", text: "Collaborator" }, collaboratorRow, { type: "blank" });
   const compactMarketingRows = compactRows(marketingRows);
   if (compactMarketingRows.length) sections.push({ title: "Marketing", rows: compactMarketingRows });
 
