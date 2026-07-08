@@ -642,8 +642,16 @@
             <label for="eventbriteAds">Eventbrite Ads</label>
             <input id="eventbriteAds" type="number" step="0.01" oninput="updateBudget()">
             <label>Collaborator</label>
-            <input id="collaboratorName" type="text" placeholder="Name" oninput="updateBudget()">
-            <input id="collaboratorAmount" type="number" step="0.01" placeholder="Amount" oninput="updateBudget()">
+            <div class="ads-split-row">
+              <div class="ads-split-col">
+                <div class="ads-split-label">Name</div>
+                <input id="collaboratorName" type="text" oninput="updateBudget()">
+              </div>
+              <div class="ads-split-col">
+                <div class="ads-split-label">Amount</div>
+                <input id="collaboratorAmount" type="number" step="0.01" oninput="updateBudget()">
+              </div>
+            </div>
           </div>
         </div>
 
