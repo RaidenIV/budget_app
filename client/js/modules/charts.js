@@ -11,10 +11,28 @@ function toNum(v) {
   return Number.isFinite(+v) ? +v : 0;
 }
 
-function cycleColors(colors, n) {
-  const out = [];
-  for (let i = 0; i < n; i++) out.push(colors[i % colors.length]);
-  return out;
+function buildAdjacentSafeColors(colors, count) {
+  const palette = [...new Set(colors || [])];
+  if (count <= 0 || palette.length === 0) return [];
+
+  const output = [];
+  for (let i = 0; i < count; i++) {
+    let color = palette[i % palette.length];
+
+    if (i > 0 && color === output[i - 1]) {
+      color = palette.find(candidate => candidate !== output[i - 1]) || color;
+    }
+
+    if (i === count - 1 && count > 1 && color === output[0]) {
+      color = palette.find(candidate => candidate !== output[i - 1] && candidate !== output[0])
+        || palette.find(candidate => candidate !== output[i - 1])
+        || color;
+    }
+
+    output.push(color);
+  }
+
+  return output;
 }
 
 function isVisible(chart, i) {
@@ -128,7 +146,7 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return existingChart;
 
-  const colors = cycleColors(baseColors, values.length);
+  const colors = buildAdjacentSafeColors(baseColors, values.length);
 
   if (!existingChart) {
     const chart = new Chart(canvas.getContext("2d"), {
@@ -138,8 +156,10 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
         datasets: [{ 
           data: values, 
           backgroundColor: colors,
-          borderColor: 'transparent',
-          borderWidth: 2
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverBorderColor: '#ffffff',
+          hoverBorderWidth: 2
         }],
       },
       options: {
@@ -173,8 +193,10 @@ function makeOrUpdatePie(existingChart, canvasId, labels, values, baseColors) {
   existingChart.data.labels = labels;
   existingChart.data.datasets[0].data = values;
   existingChart.data.datasets[0].backgroundColor = colors;
-  existingChart.data.datasets[0].borderColor = 'transparent';
+  existingChart.data.datasets[0].borderColor = '#ffffff';
   existingChart.data.datasets[0].borderWidth = 2;
+  existingChart.data.datasets[0].hoverBorderColor = '#ffffff';
+  existingChart.data.datasets[0].hoverBorderWidth = 2;
 
   // IMPORTANT: apply dark-mode options even when reusing an existing chart,
   // otherwise changes only take effect on first creation.

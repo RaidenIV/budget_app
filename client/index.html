@@ -376,6 +376,15 @@
     color: #ff4444;
 }
 
+.stat-inline-detail {
+    max-width: 240px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
 #analyticsView .charts-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -850,6 +859,42 @@
                 <div class="stat-inline-item">
                     <span class="stat-inline-label">Profitable Event Rate:</span>
                     <span class="stat-inline-value" id="profitableEventRate">0.00%</span>
+                </div>
+            </div>
+
+            <div class="stats-inline">
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Median Profit Per Event:</span>
+                    <span class="stat-inline-value" id="medianProfitPerEvent">$0.00</span>
+                </div>
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Revenue-To-Expense Ratio:</span>
+                    <span class="stat-inline-value" id="revenueToExpenseRatio">N/A</span>
+                </div>
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Profitable / Loss-Making Events:</span>
+                    <span class="stat-inline-value" id="profitableLossMakingEvents">0 / 0</span>
+                    <span class="stat-inline-detail" id="profitableLossMakingEventsDetail">Profitable / loss-making</span>
+                </div>
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Largest Expense Category:</span>
+                    <span class="stat-inline-value" id="topExpenseCategory">No data</span>
+                    <span class="stat-inline-detail" id="topExpenseCategoryDetail">$0.00 · 0.00% of expenses</span>
+                </div>
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Top Revenue Source:</span>
+                    <span class="stat-inline-value" id="topRevenueSource">No data</span>
+                    <span class="stat-inline-detail" id="topRevenueSourceDetail">$0.00 · 0.00% of revenue</span>
+                </div>
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Best Performing Event:</span>
+                    <span class="stat-inline-value" id="bestPerformingEvent">$0.00</span>
+                    <span class="stat-inline-detail" id="bestPerformingEventDetail">No event data</span>
+                </div>
+                <div class="stat-inline-item">
+                    <span class="stat-inline-label">Lowest Performing Event:</span>
+                    <span class="stat-inline-value" id="lowestPerformingEvent">$0.00</span>
+                    <span class="stat-inline-detail" id="lowestPerformingEventDetail">No event data</span>
                 </div>
             </div>
             

@@ -153,6 +153,52 @@ function filterBudgetsByDate(budgets, filter) {
   });
 }
 
+function buildAdjacentSafeColors(colors, count) {
+  const palette = [...new Set(colors || [])];
+  if (count <= 0 || palette.length === 0) return [];
+
+  const output = [];
+  for (let i = 0; i < count; i++) {
+    let color = palette[i % palette.length];
+
+    if (i > 0 && color === output[i - 1]) {
+      color = palette.find(candidate => candidate !== output[i - 1]) || color;
+    }
+
+    if (i === count - 1 && count > 1 && color === output[0]) {
+      color = palette.find(candidate => candidate !== output[i - 1] && candidate !== output[0])
+        || palette.find(candidate => candidate !== output[i - 1])
+        || color;
+    }
+
+    output.push(color);
+  }
+
+  return output;
+}
+
+function getMedian(values) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const midpoint = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[midpoint - 1] + sorted[midpoint]) / 2
+    : sorted[midpoint];
+}
+
+function getTopEntry(data, total) {
+  const [label, value] = Object.entries(data).reduce(
+    (top, entry) => entry[1] > top[1] ? entry : top,
+    ['', 0]
+  );
+
+  return {
+    label: value > 0 ? label : 'No data',
+    value,
+    percentage: total > 0 ? (value / total) * 100 : 0
+  };
+}
+
 function aggregateData(budgets) {
   const aggregated = {
     expenses: { Headliners: 0, Support: 0, Production: 0, Gear: 0, Marketing: 0, Staff: 0, Media: 0, Other: 0 },
@@ -162,12 +208,20 @@ function aggregateData(budgets) {
     totalProfit: 0,
     eventCount: budgets.length,
     profitableEventCount: 0,
+    lossMakingEventCount: 0,
+    breakEvenEventCount: 0,
     averageExpensesPerEvent: 0,
     averageIncomingSalesPerEvent: 0,
     averageProfitPerEvent: 0,
+    medianProfitPerEvent: 0,
     profitMargin: 0,
     returnOnExpenses: 0,
     profitableEventRate: 0,
+    revenueToExpenseRatio: null,
+    topExpenseCategory: { label: 'No data', value: 0, percentage: 0 },
+    topRevenueSource: { label: 'No data', value: 0, percentage: 0 },
+    bestPerformingEvent: null,
+    lowestPerformingEvent: null,
     events: []
   };
   budgets.forEach(budget => {
@@ -176,8 +230,20 @@ function aggregateData(budgets) {
     aggregated.totalExpenses += budget.totalExpenses;
     aggregated.totalRevenue += budget.totalRevenue;
     aggregated.totalProfit += budget.netProfit;
-    if (budget.netProfit > 0) aggregated.profitableEventCount += 1;
-    aggregated.events.push({ title: budget.showTitle, date: budget.showDate, profit: budget.netProfit });
+    if (budget.netProfit > 0) {
+      aggregated.profitableEventCount += 1;
+    } else if (budget.netProfit < 0) {
+      aggregated.lossMakingEventCount += 1;
+    } else {
+      aggregated.breakEvenEventCount += 1;
+    }
+    aggregated.events.push({
+      title: budget.showTitle,
+      date: budget.showDate,
+      profit: budget.netProfit,
+      expenses: budget.totalExpenses,
+      revenue: budget.totalRevenue
+    });
   });
 
   if (aggregated.eventCount > 0) {
@@ -191,6 +257,16 @@ function aggregateData(budgets) {
   }
   if (aggregated.totalExpenses > 0) {
     aggregated.returnOnExpenses = (aggregated.totalProfit / aggregated.totalExpenses) * 100;
+    aggregated.revenueToExpenseRatio = aggregated.totalRevenue / aggregated.totalExpenses;
+  }
+
+  aggregated.medianProfitPerEvent = getMedian(aggregated.events.map(event => event.profit));
+  aggregated.topExpenseCategory = getTopEntry(aggregated.expenses, aggregated.totalExpenses);
+  aggregated.topRevenueSource = getTopEntry(aggregated.revenue, aggregated.totalRevenue);
+
+  if (aggregated.events.length > 0) {
+    aggregated.bestPerformingEvent = aggregated.events.reduce((best, event) => event.profit > best.profit ? event : best);
+    aggregated.lowestPerformingEvent = aggregated.events.reduce((lowest, event) => event.profit < lowest.profit ? event : lowest);
   }
 
   aggregated.events.sort((a, b) => {
@@ -208,11 +284,15 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
   const filtered = labels.map((label, i) => ({ label, value: values[i] })).filter(item => item.value > 0);
   const filteredLabels = filtered.map(item => item.label);
   const filteredValues = filtered.map(item => item.value);
-  const filteredColors = filtered.map((_, i) => colors[i % colors.length]);
+  const filteredColors = buildAdjacentSafeColors(colors, filtered.length);
   if (chart) {
     chart.data.labels = filteredLabels;
     chart.data.datasets[0].data = filteredValues;
     chart.data.datasets[0].backgroundColor = filteredColors;
+    chart.data.datasets[0].borderColor = '#ffffff';
+    chart.data.datasets[0].borderWidth = 2;
+    chart.data.datasets[0].hoverBorderColor = '#ffffff';
+    chart.data.datasets[0].hoverBorderWidth = 2;
     chart.update();
     return chart;
   }
@@ -220,7 +300,7 @@ function createOrUpdateChart(chart, canvasId, labels, values, colors) {
     type: 'doughnut',
     data: {
       labels: filteredLabels,
-      datasets: [{ data: filteredValues, backgroundColor: filteredColors, borderColor: 'transparent', borderWidth: 2 }]
+      datasets: [{ data: filteredValues, backgroundColor: filteredColors, borderColor: '#ffffff', borderWidth: 2, hoverBorderColor: '#ffffff', hoverBorderWidth: 2 }]
     },
     options: {
       responsive: true,
@@ -283,6 +363,49 @@ function updateDisplay(aggregated) {
   returnOnExpensesEl.className = `stat-inline-value ${aggregated.returnOnExpenses >= 0 ? 'positive' : 'negative'}`;
 
   document.getElementById('profitableEventRate').textContent = `${aggregated.profitableEventRate.toFixed(2)}%`;
+
+  const medianProfitEl = document.getElementById('medianProfitPerEvent');
+  medianProfitEl.textContent = `${aggregated.medianProfitPerEvent >= 0 ? '+' : ''}$${aggregated.medianProfitPerEvent.toFixed(2)}`;
+  medianProfitEl.className = `stat-inline-value ${aggregated.medianProfitPerEvent >= 0 ? 'positive' : 'negative'}`;
+
+  document.getElementById('revenueToExpenseRatio').textContent = aggregated.revenueToExpenseRatio === null
+    ? 'N/A'
+    : `${aggregated.revenueToExpenseRatio.toFixed(2)}x`;
+
+  document.getElementById('profitableLossMakingEvents').textContent = `${aggregated.profitableEventCount} / ${aggregated.lossMakingEventCount}`;
+  document.getElementById('profitableLossMakingEventsDetail').textContent = aggregated.breakEvenEventCount > 0
+    ? `Profitable / loss-making · ${aggregated.breakEvenEventCount} break-even`
+    : 'Profitable / loss-making';
+
+  document.getElementById('topExpenseCategory').textContent = aggregated.topExpenseCategory.label;
+  document.getElementById('topExpenseCategoryDetail').textContent = `$${aggregated.topExpenseCategory.value.toFixed(2)} · ${aggregated.topExpenseCategory.percentage.toFixed(2)}% of expenses`;
+
+  document.getElementById('topRevenueSource').textContent = aggregated.topRevenueSource.label;
+  document.getElementById('topRevenueSourceDetail').textContent = `$${aggregated.topRevenueSource.value.toFixed(2)} · ${aggregated.topRevenueSource.percentage.toFixed(2)}% of revenue`;
+
+  const bestEventValue = document.getElementById('bestPerformingEvent');
+  const bestEventDetail = document.getElementById('bestPerformingEventDetail');
+  if (aggregated.bestPerformingEvent) {
+    bestEventValue.textContent = `${aggregated.bestPerformingEvent.profit >= 0 ? '+' : ''}$${aggregated.bestPerformingEvent.profit.toFixed(2)}`;
+    bestEventValue.className = `stat-inline-value ${aggregated.bestPerformingEvent.profit >= 0 ? 'positive' : 'negative'}`;
+    bestEventDetail.textContent = aggregated.bestPerformingEvent.title || 'Untitled Event';
+  } else {
+    bestEventValue.textContent = '$0.00';
+    bestEventValue.className = 'stat-inline-value';
+    bestEventDetail.textContent = 'No event data';
+  }
+
+  const lowestEventValue = document.getElementById('lowestPerformingEvent');
+  const lowestEventDetail = document.getElementById('lowestPerformingEventDetail');
+  if (aggregated.lowestPerformingEvent) {
+    lowestEventValue.textContent = `${aggregated.lowestPerformingEvent.profit >= 0 ? '+' : ''}$${aggregated.lowestPerformingEvent.profit.toFixed(2)}`;
+    lowestEventValue.className = `stat-inline-value ${aggregated.lowestPerformingEvent.profit >= 0 ? 'positive' : 'negative'}`;
+    lowestEventDetail.textContent = aggregated.lowestPerformingEvent.title || 'Untitled Event';
+  } else {
+    lowestEventValue.textContent = '$0.00';
+    lowestEventValue.className = 'stat-inline-value';
+    lowestEventDetail.textContent = 'No event data';
+  }
 
   const expenseLabels = Object.keys(aggregated.expenses);
   const expenseValues = Object.values(aggregated.expenses);
