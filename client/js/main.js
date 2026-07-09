@@ -48,13 +48,14 @@ export function updateBudget() {
     },
     {
       Eventbrite: budgetData.revenue.Eventbrite,
-      Posh: budgetData.revenue.Posh,
-      Raffle: budgetData.revenue.Raffle,
+      "Posh Sales": budgetData.revenue["Posh Sales"],
+      "Raffle Sales": budgetData.revenue["Raffle Sales"],
       Presales: budgetData.revenue.Presales,
-      Promo: budgetData.revenue.Promo,
+      "Promo Team Sales": budgetData.revenue["Promo Team Sales"],
       Door: budgetData.revenue.Door,
       "Merch Sold": budgetData.revenue["Merch Sold"],
-      "Merch Vendors": budgetData.revenue["Merch Vendors"]
+      "Merch Vendors": budgetData.revenue["Merch Vendors"],
+      "Other Sales": budgetData.revenue["Other Sales"]
     }
   );
 }

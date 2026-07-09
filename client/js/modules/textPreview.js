@@ -228,15 +228,17 @@ export function updateTextPreview(data = {}) {
     return t;
   })();
 
+  const otherSalesName = getStr("otherSalesName") || "Other Sales";
   const revenueRows = [
     moneyRow("Eventbrite Sales:", getNum("eventbriteSales")),
-    moneyRow("Posh:", getNum("poshSales")),
-    moneyRow("Raffle:", getNum("raffleSales")),
+    moneyRow("Posh Sales:", getNum("poshSales")),
+    moneyRow("Raffle Sales:", getNum("raffleSales")),
     moneyRow("DJ Presales:", getNum("djPresales")),
-    moneyRow("Promo Team:", getNum("promoTeam")),
+    moneyRow("Promo Team Sales:", getNum("promoTeam")),
     moneyRow("Door Sales:", getNum("doorSales")),
     moneyRow("Merch Sold:", getNum("merchSold")),
     moneyRow("Merch Vendors:", merchVendorTotal),
+    moneyRow(`${otherSalesName}:`, getNum("otherSales")),
   ].filter(Boolean);
 
   revenueRows.forEach(r => consider(r.label || ""));

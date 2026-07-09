@@ -112,6 +112,7 @@ export function calculateBudget() {
   const promoTeam = getNum("promoTeam");
   const doorSales = getNum("doorSales");
   const merchSold = getNum("merchSold");
+  const otherSales = getNum("otherSales");
 
   let merchVendorTotal = 0;
   document.querySelectorAll('input[id^="merchVendor_fee_"]').forEach(el => {
@@ -126,7 +127,8 @@ export function calculateBudget() {
     promoTeam +
     doorSales +
     merchSold +
-    merchVendorTotal;
+    merchVendorTotal +
+    otherSales;
 
   const netProfit = totalRevenue - totalExpenses;
 
@@ -144,13 +146,14 @@ export function calculateBudget() {
     },
     revenue: {
       Eventbrite: eventbriteSales,
-      Posh: poshSales,
-      Raffle: raffleSales,
+      "Posh Sales": poshSales,
+      "Raffle Sales": raffleSales,
       Presales: djPresales,
-      Promo: promoTeam,
+      "Promo Team Sales": promoTeam,
       Door: doorSales,
       "Merch Sold": merchSold,
       "Merch Vendors": merchVendorTotal,
+      "Other Sales": otherSales,
       total: totalRevenue
     },
     netProfit

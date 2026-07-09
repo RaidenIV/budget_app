@@ -95,6 +95,7 @@ function calculateBudgetFromData(data) {
   const promoTeam = getNum('promoTeam');
   const doorSales = getNum('doorSales');
   const merchSold = getNum('merchSold');
+  const otherSales = getNum('otherSales');
   let merchVendorTotal = 0;
   const numMerchVendors = parseInt(data.numMerchVendors || 0);
   for (let i = 1; i <= numMerchVendors; i++) {
@@ -112,13 +113,14 @@ function calculateBudgetFromData(data) {
   };
   const revenue = {
     Eventbrite: eventbriteSales,
-    Posh: poshSales,
-    Raffle: raffleSales,
+    'Posh Sales': poshSales,
+    'Raffle Sales': raffleSales,
     Presales: djPresales,
-    Promo: promoTeam,
+    'Promo Team Sales': promoTeam,
     Door: doorSales,
     'Merch Sold': merchSold,
-    'Merch Vendors': merchVendorTotal
+    'Merch Vendors': merchVendorTotal,
+    'Other Sales': otherSales
   };
   const totalExpenses = Object.values(expenses).reduce((a, b) => a + b, 0);
   const totalRevenue = Object.values(revenue).reduce((a, b) => a + b, 0);
@@ -202,7 +204,7 @@ function getTopEntry(data, total) {
 function aggregateData(budgets) {
   const aggregated = {
     expenses: { Headliners: 0, Support: 0, Production: 0, Gear: 0, Marketing: 0, Staff: 0, Media: 0, Other: 0 },
-    revenue: { Eventbrite: 0, Posh: 0, Raffle: 0, Presales: 0, Promo: 0, Door: 0, 'Merch Sold': 0, 'Merch Vendors': 0 },
+    revenue: { Eventbrite: 0, 'Posh Sales': 0, 'Raffle Sales': 0, Presales: 0, 'Promo Team Sales': 0, Door: 0, 'Merch Sold': 0, 'Merch Vendors': 0, 'Other Sales': 0 },
     totalExpenses: 0,
     totalRevenue: 0,
     totalProfit: 0,

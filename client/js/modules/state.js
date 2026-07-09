@@ -53,12 +53,14 @@ export const FIELDS = {
   },
   sales: {
     eventbriteSales: { id: "eventbriteSales", label: "Eventbrite Sales", csv: "Eventbrite Sales" },
-    poshSales: { id: "poshSales", label: "Posh", csv: "Posh" },
-    raffleSales: { id: "raffleSales", label: "Raffle", csv: "Raffle" },
+    poshSales: { id: "poshSales", label: "Posh Sales", csv: "Posh Sales" },
+    raffleSales: { id: "raffleSales", label: "Raffle Sales", csv: "Raffle Sales" },
     djPresales: { id: "djPresales", label: "DJ Presales", csv: "DJ Presales" },
-    promoTeam: { id: "promoTeam", label: "Promo Team", csv: "Promo Team" },
+    promoTeam: { id: "promoTeam", label: "Promo Team Sales", csv: "Promo Team Sales" },
     doorSales: { id: "doorSales", label: "Door Sales", csv: "Door Sales" },
-    merchSold: { id: "merchSold", label: "Merch Sold", csv: "Merch Sold" }
+    merchSold: { id: "merchSold", label: "Merch Sold", csv: "Merch Sold" },
+    otherSalesName: { id: "otherSalesName", label: "Other Sales Name", csv: "Other Sales Name" },
+    otherSales: { id: "otherSales", label: "Other Sales", csv: "Other Sales" }
   }
 };
 
