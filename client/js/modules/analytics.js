@@ -161,6 +161,13 @@ function aggregateData(budgets) {
     totalRevenue: 0,
     totalProfit: 0,
     eventCount: budgets.length,
+    profitableEventCount: 0,
+    averageExpensesPerEvent: 0,
+    averageIncomingSalesPerEvent: 0,
+    averageProfitPerEvent: 0,
+    profitMargin: 0,
+    returnOnExpenses: 0,
+    profitableEventRate: 0,
     events: []
   };
   budgets.forEach(budget => {
@@ -169,8 +176,23 @@ function aggregateData(budgets) {
     aggregated.totalExpenses += budget.totalExpenses;
     aggregated.totalRevenue += budget.totalRevenue;
     aggregated.totalProfit += budget.netProfit;
+    if (budget.netProfit > 0) aggregated.profitableEventCount += 1;
     aggregated.events.push({ title: budget.showTitle, date: budget.showDate, profit: budget.netProfit });
   });
+
+  if (aggregated.eventCount > 0) {
+    aggregated.averageExpensesPerEvent = aggregated.totalExpenses / aggregated.eventCount;
+    aggregated.averageIncomingSalesPerEvent = aggregated.totalRevenue / aggregated.eventCount;
+    aggregated.averageProfitPerEvent = aggregated.totalProfit / aggregated.eventCount;
+    aggregated.profitableEventRate = (aggregated.profitableEventCount / aggregated.eventCount) * 100;
+  }
+  if (aggregated.totalRevenue > 0) {
+    aggregated.profitMargin = (aggregated.totalProfit / aggregated.totalRevenue) * 100;
+  }
+  if (aggregated.totalExpenses > 0) {
+    aggregated.returnOnExpenses = (aggregated.totalProfit / aggregated.totalExpenses) * 100;
+  }
+
   aggregated.events.sort((a, b) => {
     const dateA = new Date(a.date || '1970-01-01');
     const dateB = new Date(b.date || '1970-01-01');
@@ -244,6 +266,24 @@ function updateDisplay(aggregated) {
   const profitEl = document.getElementById('totalProfit');
   profitEl.textContent = `${aggregated.totalProfit >= 0 ? '+' : ''}$${aggregated.totalProfit.toFixed(2)}`;
   profitEl.className = `stat-inline-value ${aggregated.totalProfit >= 0 ? 'positive' : 'negative'}`;
+
+  document.getElementById('averageExpensesPerEvent').textContent = `$${aggregated.averageExpensesPerEvent.toFixed(2)}`;
+  document.getElementById('averageIncomingSalesPerEvent').textContent = `$${aggregated.averageIncomingSalesPerEvent.toFixed(2)}`;
+
+  const averageProfitEl = document.getElementById('averageProfitPerEvent');
+  averageProfitEl.textContent = `${aggregated.averageProfitPerEvent >= 0 ? '+' : ''}$${aggregated.averageProfitPerEvent.toFixed(2)}`;
+  averageProfitEl.className = `stat-inline-value ${aggregated.averageProfitPerEvent >= 0 ? 'positive' : 'negative'}`;
+
+  const profitMarginEl = document.getElementById('profitMargin');
+  profitMarginEl.textContent = `${aggregated.profitMargin.toFixed(2)}%`;
+  profitMarginEl.className = `stat-inline-value ${aggregated.profitMargin >= 0 ? 'positive' : 'negative'}`;
+
+  const returnOnExpensesEl = document.getElementById('returnOnExpenses');
+  returnOnExpensesEl.textContent = `${aggregated.returnOnExpenses.toFixed(2)}%`;
+  returnOnExpensesEl.className = `stat-inline-value ${aggregated.returnOnExpenses >= 0 ? 'positive' : 'negative'}`;
+
+  document.getElementById('profitableEventRate').textContent = `${aggregated.profitableEventRate.toFixed(2)}%`;
+
   const expenseLabels = Object.keys(aggregated.expenses);
   const expenseValues = Object.values(aggregated.expenses);
   expensesChart = createOrUpdateChart(expensesChart, 'expensesChartAnalytics', expenseLabels, expenseValues, EXP_COLORS);
