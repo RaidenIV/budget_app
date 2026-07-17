@@ -135,15 +135,34 @@ function calculateBudgetFromData(data) {
   };
 }
 
-function filterBudgetsByDate(budgets, filter) {
-  if (filter === 'all') return budgets;
+function parseShowDate(dateStr) {
+  if (!dateStr) return null;
+
+  const normalized = String(dateStr).trim();
+  const isoDateMatch = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoDateMatch) {
+    const [, year, month, day] = isoDateMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getTodayStart() {
   const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function filterBudgetsByDate(budgets, filter) {
+  const now = new Date();
+  const todayStart = getTodayStart();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
   return budgets.filter(budget => {
-    if (!budget.showDate) return false;
-    const budgetDate = new Date(budget.showDate);
-    if (isNaN(budgetDate.getTime())) return false;
+    const budgetDate = parseShowDate(budget.showDate);
+    if (!budgetDate || budgetDate > todayStart) return false;
+    if (filter === 'all') return true;
     if (filter === 'year') {
       return budgetDate.getFullYear() === currentYear;
     } else if (filter === 'month') {
@@ -272,8 +291,8 @@ function aggregateData(budgets) {
   }
 
   aggregated.events.sort((a, b) => {
-    const dateA = new Date(a.date || '1970-01-01');
-    const dateB = new Date(b.date || '1970-01-01');
+    const dateA = parseShowDate(a.date) || new Date(1970, 0, 1);
+    const dateB = parseShowDate(b.date) || new Date(1970, 0, 1);
     return dateB - dateA;
   });
   return aggregated;
@@ -425,8 +444,8 @@ function updateDisplay(aggregated) {
 
 function formatDate(dateStr) {
   if (!dateStr) return 'No date';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
+  const date = parseShowDate(dateStr);
+  if (!date) return dateStr;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
@@ -466,7 +485,10 @@ function populateYearSelector() {
   const yearSelect = document.getElementById('yearSelect');
   if (!yearSelect) return;
   const currentYear = new Date().getFullYear();
-  const years = new Set(allBudgets.map(b => b.showDate ? new Date(b.showDate).getFullYear() : null).filter(y => y && !isNaN(y)));
+  const years = new Set(allBudgets.map(b => {
+    const showDate = parseShowDate(b.showDate);
+    return showDate ? showDate.getFullYear() : null;
+  }).filter(y => y && !isNaN(y)));
   const minYear = Math.min(...years, currentYear);
   const maxYear = Math.max(...years, currentYear);
   yearSelect.innerHTML = '';
