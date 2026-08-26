@@ -911,3 +911,51 @@ form .quantity-row + .collapsible {
         gap: 16px;
     }
 }
+
+/* ----------------------------------------------------------
+   LARGE DISPLAY RESPONSIVE SUPPORT
+---------------------------------------------------------- */
+@media (min-width: 2200px) {
+    :root {
+        --card-gap: 24px;
+    }
+
+    .page-wrapper {
+        max-width: 2600px;
+        padding: 104px 36px 34px;
+    }
+
+    h1 {
+        font-size: 38px;
+    }
+
+    .main-container {
+        grid-template-columns: minmax(360px, 0.85fr) minmax(620px, 1.3fr) minmax(360px, 0.85fr);
+        gap: 24px;
+    }
+
+    .chart-canvas-wrap {
+        height: 300px;
+    }
+}
+
+@media (min-width: 3200px) {
+    .page-wrapper {
+        max-width: 3000px;
+    }
+
+    .main-container {
+        grid-template-columns: minmax(420px, 0.9fr) minmax(760px, 1.25fr) minmax(420px, 0.9fr);
+        gap: 28px;
+    }
+
+    form,
+    .charts-section {
+        padding: 26px;
+    }
+
+    .chart-canvas-wrap {
+        height: 340px;
+    }
+}
+

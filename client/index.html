@@ -433,6 +433,47 @@
     }
 }
 
+@media (min-width: 2200px) {
+    #analyticsView {
+        max-width: 2600px;
+        padding: 104px 36px 34px;
+    }
+
+    .analytics-main-card {
+        padding: 2.25rem;
+    }
+
+    #analyticsView .charts-container {
+        gap: 2.25rem;
+    }
+
+    #analyticsView .chart-card {
+        height: 560px;
+    }
+
+    #analyticsView .event-list {
+        height: 510px;
+    }
+}
+
+@media (min-width: 3200px) {
+    #analyticsView {
+        max-width: 3000px;
+    }
+
+    #analyticsView .charts-container {
+        gap: 2.5rem;
+    }
+
+    #analyticsView .chart-card {
+        height: 620px;
+    }
+
+    #analyticsView .event-list {
+        height: 570px;
+    }
+}
+
 </style>
 </head>
 
@@ -478,7 +519,7 @@
             <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
 
             <div class="break-even-section">
-                <div class="summary-subtitle">HOW MANY TICKETS TO BREAK EVEN</div>
+                <div class="summary-subtitle">TICKET BREAK-EVEN CALCULATOR</div>
                 <div class="quantity-row break-even-quantity-row">
                     <label for="numTicketTypes">Number of Ticket Types:</label>
                     <input id="numTicketTypes" type="number" min="0" max="10" value="0" onchange="regenerateTicketTypes()">
