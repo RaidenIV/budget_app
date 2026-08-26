@@ -132,6 +132,21 @@ export function calculateBudget() {
 
   const netProfit = totalRevenue - totalExpenses;
 
+  const numTicketTypes = +document.getElementById("numTicketTypes")?.value || 0;
+  const ticketPrices = [];
+  for (let i = 1; i <= numTicketTypes; i++) {
+    const price = getNum(`ticketTypePrice_${i}`);
+    if (price > 0) ticketPrices.push(price);
+  }
+
+  const averageTicketPrice = ticketPrices.length
+    ? ticketPrices.reduce((total, price) => total + price, 0) / ticketPrices.length
+    : 0;
+
+  const breakEvenTickets = averageTicketPrice > 0 && totalExpenses > 0
+    ? Math.ceil(totalExpenses / averageTicketPrice)
+    : 0;
+
   return {
     expenses: {
       Headliners: headlinerTotal,
@@ -156,6 +171,10 @@ export function calculateBudget() {
       "Other Sales": otherSales,
       total: totalRevenue
     },
+    ticketBreakEven: {
+      averageTicketPrice,
+      ticketsNeeded: breakEvenTickets
+    },
     netProfit
   };
 }
@@ -166,6 +185,16 @@ export function updateSummaryDisplay(data) {
 
   const totalRevenueEl = document.getElementById("totalRevenue");
   if (totalRevenueEl) totalRevenueEl.textContent = data.revenue.total.toFixed(2);
+
+  const averageTicketPriceEl = document.getElementById("averageTicketPrice");
+  if (averageTicketPriceEl) {
+    averageTicketPriceEl.textContent = (data.ticketBreakEven?.averageTicketPrice || 0).toFixed(2);
+  }
+
+  const breakEvenTicketsEl = document.getElementById("breakEvenTickets");
+  if (breakEvenTicketsEl) {
+    breakEvenTicketsEl.textContent = (data.ticketBreakEven?.ticketsNeeded || 0).toLocaleString("en-US");
+  }
 
   const profitLine = document.getElementById("profitLine");
   if (profitLine) {

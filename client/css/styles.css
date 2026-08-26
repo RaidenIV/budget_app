@@ -390,6 +390,43 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: var(--accent);
 }
 
+.summary-subtitle {
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.break-even-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    text-align: left;
+}
+
+.break-even-section .quantity-row {
+    margin-bottom: 12px;
+}
+
+.break-even-section .quantity-row label {
+    margin: 0;
+}
+
+.break-even-section .ads-split-row {
+    text-align: left;
+}
+
+.break-even-results {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.break-even-results span {
+    color: var(--accent);
+}
+
 /* ----------------------------------------------------------
    SERVER LOAD SECTION - CONSISTENT SPACING
 ---------------------------------------------------------- */

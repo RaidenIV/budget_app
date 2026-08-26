@@ -60,6 +60,69 @@ export function updateBudget() {
   );
 }
 
+function getTicketTypeInputValues() {
+  const values = {};
+  document.querySelectorAll('[id^="ticketTypeName_"], [id^="ticketTypePrice_"]').forEach((el) => {
+    values[el.id] = el.value;
+  });
+  return values;
+}
+
+export function regenerateTicketTypes() {
+  const countInput = document.getElementById("numTicketTypes");
+  const container = document.getElementById("ticketTypeInputs");
+  if (!countInput || !container) return;
+
+  let count = Math.floor(Number(countInput.value) || 0);
+  count = Math.max(0, Math.min(10, count));
+  countInput.value = String(count);
+
+  const previousValues = getTicketTypeInputValues();
+  container.innerHTML = "";
+
+  for (let i = 1; i <= count; i++) {
+    const row = document.createElement("div");
+    row.className = "ads-split-row";
+
+    const nameCol = document.createElement("div");
+    nameCol.className = "ads-split-col";
+
+    const nameLabel = document.createElement("div");
+    nameLabel.className = "ads-split-label";
+    nameLabel.textContent = `Ticket Type ${i}`;
+
+    const nameInput = document.createElement("input");
+    nameInput.id = `ticketTypeName_${i}`;
+    nameInput.type = "text";
+    nameInput.placeholder = "Name";
+    nameInput.value = previousValues[nameInput.id] || "";
+    nameInput.addEventListener("input", updateBudget);
+
+    nameCol.append(nameLabel, nameInput);
+
+    const priceCol = document.createElement("div");
+    priceCol.className = "ads-split-col";
+
+    const priceLabel = document.createElement("div");
+    priceLabel.className = "ads-split-label";
+    priceLabel.textContent = "Price";
+
+    const priceInput = document.createElement("input");
+    priceInput.id = `ticketTypePrice_${i}`;
+    priceInput.type = "number";
+    priceInput.step = "0.01";
+    priceInput.placeholder = "0.00";
+    priceInput.value = previousValues[priceInput.id] || "";
+    priceInput.addEventListener("input", updateBudget);
+
+    priceCol.append(priceLabel, priceInput);
+    row.append(nameCol, priceCol);
+    container.appendChild(row);
+  }
+
+  updateBudget();
+}
+
 // Form reset function
 export function resetForm() {
   const form = document.getElementById("budgetForm");
@@ -78,6 +141,7 @@ export function resetForm() {
   const numMedia = document.getElementById("numMedia");
   const numOtherCategories = document.getElementById("numOtherCategories");
   const numMerchVendors = document.getElementById("numMerchVendors");
+  const numTicketTypes = document.getElementById("numTicketTypes");
 
   if (numHeadliners) numHeadliners.value = 1;
   if (numLocalDJs) numLocalDJs.value = 0;
@@ -86,6 +150,7 @@ export function resetForm() {
   if (numMedia) numMedia.value = 0;
   if (numOtherCategories) numOtherCategories.value = 0;
   if (numMerchVendors) numMerchVendors.value = 0;
+  if (numTicketTypes) numTicketTypes.value = 0;
 
   state.headliners = {};
   state.localDJs = {};
@@ -102,7 +167,8 @@ export function resetForm() {
     "showRunnerInputs",
     "mediaInputs",
     "allOtherCategories",
-    "merchVendorInputs"
+    "merchVendorInputs",
+    "ticketTypeInputs"
   ];
 
   containers.forEach(id => {
@@ -149,7 +215,8 @@ function buildRegenerators() {
     merchVendors: () => regenerateVendors(updateBudget),
 
     otherCategories: () => regenerateOtherCategories(updateBudget),
-    otherItems: (c) => regenerateOtherItems(c, updateBudget)
+    otherItems: (c) => regenerateOtherItems(c, updateBudget),
+    ticketTypes: () => regenerateTicketTypes()
   };
 }
 
@@ -161,6 +228,7 @@ window.downloadCSV = downloadCSV;
 window.triggerImport = triggerImport;
 window.downloadAll = downloadAll;
 window.toggleCollapse = toggleCollapse;
+window.regenerateTicketTypes = regenerateTicketTypes;
 window.copyTextPreview = copyTextPreview;
 window.exportTextPreviewTxt = exportTextPreviewTxt;
 window.downloadChartsPNG = () => downloadChartsPNG(buildChartsPngFileName());
@@ -208,6 +276,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Initialize with one headliner
   regenerateHeadliners(updateBudget);
+  regenerateTicketTypes();
   updateBudget();
 
   console.log('✅ Budget App Ready!');

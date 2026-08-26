@@ -16,6 +16,7 @@ const COUNT_FIELD_IDS = [
   "numMedia",
   "numOtherCategories",
   "numMerchVendors",
+  "numTicketTypes",
 ];
 
 const EXCLUDE_IDS = new Set([
@@ -33,6 +34,7 @@ const EXTRA_SCOPE_IDS = [
   "directSupportDetails",
   "supportSection",
   "supportInputs",
+  "summary",
 ];
 
 // NEW: if you used these IDs (or similar), they’ll be force-included even if outside the form
@@ -319,6 +321,7 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
     regenerators.otherCategories?.();
     regenerators.vendors?.();
     regenerators.merchVendors?.();
+    regenerators.ticketTypes?.();
   } catch (e) {
     console.error("Regenerator error (top-level) during loadCSV:", e);
   }

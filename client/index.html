@@ -451,7 +451,7 @@
         <a href="https://www.xodiamediagroup.com/" target="_top" rel="noopener">Home</a>
         <a href="https://www.xodiamediagroup.com/upcoming-events" target="_top" rel="noopener">Upcoming Events</a>
         <a href="https://www.xodiamediagroup.com/contact" target="_top" rel="noopener">Contact Us</a>
-        <a href="https://tools-dashboard-production-1c7c.up.railway.app/" target="_top" rel="noopener">Tools</a>
+        <a href="https://www.xodiamediagroup.com/tools" target="_top" rel="noopener">Tools</a>
     </div>
 </div>
 
@@ -476,6 +476,19 @@
             <p>Total Expenses: $<span id="totalExpenses">0</span></p>
             <p>Total Incoming Sales: $<span id="totalRevenue">0</span></p>
             <p id="profitLine">Net Profit: $<span id="netProfit">0</span></p>
+
+            <div class="break-even-section">
+                <div class="summary-subtitle">HOW MANY TICKETS TO BREAK EVEN</div>
+                <div class="quantity-row break-even-quantity-row">
+                    <label for="numTicketTypes">Number of Ticket Types:</label>
+                    <input id="numTicketTypes" type="number" min="0" max="10" value="0" onchange="regenerateTicketTypes()">
+                </div>
+                <div id="ticketTypeInputs"></div>
+                <div class="break-even-results">
+                    <p>Average Ticket Price: $<span id="averageTicketPrice">0.00</span></p>
+                    <p>Tickets Needed: <span id="breakEvenTickets">0</span></p>
+                </div>
+            </div>
             
             <div style="margin-top: 1.5rem;">
                 <button type="button" id="toggleAnalyticsBtn" onclick="toggleAnalyticsView()">
