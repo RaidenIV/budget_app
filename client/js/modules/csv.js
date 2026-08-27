@@ -35,6 +35,7 @@ const EXTRA_SCOPE_IDS = [
   "supportSection",
   "supportInputs",
   "summary",
+  "ticketTypeInputs",
 ];
 
 // NEW: if you used these IDs (or similar), they’ll be force-included even if outside the form
@@ -221,6 +222,29 @@ function collectExportElements() {
   return out;
 }
 
+function collectTicketBreakEvenElements() {
+  const elements = [];
+  const seen = new Set();
+
+  const addById = (id) => {
+    const el = document.getElementById(id);
+    if (!isFormValueElement(el)) return;
+    if (seen.has(el.id)) return;
+    seen.add(el.id);
+    elements.push(el);
+  };
+
+  addById("numTicketTypes");
+
+  const count = Math.max(0, Math.min(10, Math.floor(Number(document.getElementById("numTicketTypes")?.value) || 0)));
+  for (let i = 1; i <= count; i++) {
+    addById(`ticketTypeName_${i}`);
+    addById(`ticketTypePrice_${i}`);
+  }
+
+  return elements;
+}
+
 export function buildCSVString() {
   const lines = [];
   lines.push(`XODIA_BUDGET_VERSION,${CSV_VERSION}`);
@@ -232,12 +256,24 @@ export function buildCSVString() {
   lines.push(`Show Date,${csvEscape(showDate)}`);
 
   const els = collectExportElements();
+  const exportedIds = new Set();
 
   for (const el of els) {
     // radios: only export checked
     const v = getElementValue(el);
     if (v === null) continue;
     lines.push(`ID:${el.id},${csvEscape(v)}`);
+    exportedIds.add(el.id);
+  }
+
+  // The zero-profit point ticket inputs are generated dynamically and live outside the main form,
+  // so force-include them by ID to keep saved/server-loaded budgets complete.
+  for (const el of collectTicketBreakEvenElements()) {
+    if (exportedIds.has(el.id)) continue;
+    const v = getElementValue(el);
+    if (v === null) continue;
+    lines.push(`ID:${el.id},${csvEscape(v)}`);
+    exportedIds.add(el.id);
   }
 
   return lines.join("\n") + "\n";
@@ -324,6 +360,14 @@ export function loadCSV(csvText, regenerators = {}, updateBudgetFn = null) {
     regenerators.ticketTypes?.();
   } catch (e) {
     console.error("Regenerator error (top-level) during loadCSV:", e);
+  }
+
+  if (kv.has("numTicketTypes") && typeof regenerators.ticketTypes !== "function" && typeof window.regenerateTicketTypes === "function") {
+    try {
+      window.regenerateTicketTypes();
+    } catch (e) {
+      console.error("Ticket type regeneration fallback failed during loadCSV:", e);
+    }
   }
 
   // IMPORTANT: set per-category counts BEFORE generating other items
