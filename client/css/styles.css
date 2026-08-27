@@ -418,6 +418,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     text-align: left;
 }
 
+.break-even-section .break-even-ticket-row {
+    grid-template-columns: 1.15fr 0.85fr 0.85fr;
+}
+
+.break-even-warning {
+    color: #ff4d4d !important;
+    font-size: 13px;
+    line-height: 1.35;
+    margin-top: 10px !important;
+}
+
+@media (max-width: 900px) {
+    .break-even-section .break-even-ticket-row {
+        grid-template-columns: 1fr;
+    }
+}
+
 .break-even-results {
     margin-top: 10px;
     text-align: center;

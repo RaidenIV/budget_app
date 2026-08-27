@@ -62,9 +62,11 @@ export function updateBudget() {
 
 function getTicketTypeInputValues() {
   const values = {};
-  document.querySelectorAll('[id^="ticketTypeName_"], [id^="ticketTypePrice_"]').forEach((el) => {
-    values[el.id] = el.value;
-  });
+  document
+    .querySelectorAll('[id^="ticketTypeName_"], [id^="ticketTypePrice_"], [id^="ticketTypeAvailable_"]')
+    .forEach((el) => {
+      values[el.id] = el.value;
+    });
   return values;
 }
 
@@ -82,7 +84,7 @@ export function regenerateTicketTypes() {
 
   for (let i = 1; i <= count; i++) {
     const row = document.createElement("div");
-    row.className = "ads-split-row";
+    row.className = "ads-split-row break-even-ticket-row";
 
     const nameCol = document.createElement("div");
     nameCol.className = "ads-split-col";
@@ -116,7 +118,25 @@ export function regenerateTicketTypes() {
     priceInput.addEventListener("input", updateBudget);
 
     priceCol.append(priceLabel, priceInput);
-    row.append(nameCol, priceCol);
+
+    const availableCol = document.createElement("div");
+    availableCol.className = "ads-split-col";
+
+    const availableLabel = document.createElement("div");
+    availableLabel.className = "ads-split-label";
+    availableLabel.textContent = "Available";
+
+    const availableInput = document.createElement("input");
+    availableInput.id = `ticketTypeAvailable_${i}`;
+    availableInput.type = "number";
+    availableInput.min = "0";
+    availableInput.step = "1";
+    availableInput.placeholder = "0";
+    availableInput.value = previousValues[availableInput.id] || "";
+    availableInput.addEventListener("input", updateBudget);
+
+    availableCol.append(availableLabel, availableInput);
+    row.append(nameCol, priceCol, availableCol);
     container.appendChild(row);
   }
 
