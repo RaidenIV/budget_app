@@ -133,34 +133,62 @@ export function calculateBudget() {
   const netProfit = totalRevenue - totalExpenses;
 
   const numTicketTypes = +document.getElementById("numTicketTypes")?.value || 0;
+  let totalTicketsSold = 0;
+  let currentTicketRevenue = 0;
   let totalTicketsAvailable = 0;
   let totalTicketRevenue = 0;
+  let remainingTicketInventory = 0;
+  let remainingPossibleTicketRevenue = 0;
 
   for (let i = 1; i <= numTicketTypes; i++) {
-    const price = getNum(`ticketTypePrice_${i}`);
+    const price = Math.max(0, getNum(`ticketTypePrice_${i}`));
+    const sold = Math.max(0, Math.floor(getNum(`ticketTypeSold_${i}`)));
     const available = Math.max(0, Math.floor(getNum(`ticketTypeAvailable_${i}`)));
+    const remainingAvailable = Math.max(0, available - sold);
 
-    if (price > 0 && available > 0) {
-      totalTicketsAvailable += available;
-      totalTicketRevenue += price * available;
+    if (price > 0) {
+      if (sold > 0) {
+        totalTicketsSold += sold;
+        currentTicketRevenue += price * sold;
+      }
+
+      if (available > 0) {
+        totalTicketsAvailable += available;
+        totalTicketRevenue += price * available;
+      }
+
+      if (remainingAvailable > 0) {
+        remainingTicketInventory += remainingAvailable;
+        remainingPossibleTicketRevenue += price * remainingAvailable;
+      }
     }
   }
 
-  const averageTicketPrice = totalTicketsAvailable > 0
+  const soldWeightedAverageTicketPrice = totalTicketsSold > 0
+    ? currentTicketRevenue / totalTicketsSold
+    : 0;
+  const availableWeightedAverageTicketPrice = totalTicketsAvailable > 0
     ? totalTicketRevenue / totalTicketsAvailable
     : 0;
+  const averageTicketPrice = soldWeightedAverageTicketPrice || availableWeightedAverageTicketPrice;
+  const remainingAmountToBreakEven = Math.max(0, totalExpenses - currentTicketRevenue);
 
   const breakEvenTickets = averageTicketPrice > 0 && totalExpenses > 0
     ? Math.ceil(totalExpenses / averageTicketPrice)
     : 0;
-
-  const canBreakEvenWithTicketInventory = totalExpenses <= totalTicketRevenue;
-  const remainingTicketsAfterBreakEven = canBreakEvenWithTicketInventory && breakEvenTickets > 0
-    ? Math.max(0, totalTicketsAvailable - breakEvenTickets)
+  const ticketsStillNeeded = averageTicketPrice > 0 && remainingAmountToBreakEven > 0
+    ? Math.ceil(remainingAmountToBreakEven / averageTicketPrice)
     : 0;
+
+  const canBreakEvenWithTicketInventory = remainingAmountToBreakEven <= remainingPossibleTicketRevenue;
+  const remainingTicketsAfterBreakEven = canBreakEvenWithTicketInventory && ticketsStillNeeded > 0
+    ? Math.max(0, remainingTicketInventory - ticketsStillNeeded)
+    : remainingAmountToBreakEven === 0
+      ? remainingTicketInventory
+      : 0;
   const ticketRevenueShortfall = canBreakEvenWithTicketInventory
     ? 0
-    : Math.max(0, totalExpenses - totalTicketRevenue);
+    : Math.max(0, remainingAmountToBreakEven - remainingPossibleTicketRevenue);
 
   return {
     expenses: {
@@ -188,9 +216,17 @@ export function calculateBudget() {
     },
     ticketBreakEven: {
       averageTicketPrice,
+      soldWeightedAverageTicketPrice,
+      availableWeightedAverageTicketPrice,
+      totalTicketsSold,
+      currentTicketRevenue,
+      remainingAmountToBreakEven,
       totalTicketsAvailable,
       totalTicketRevenue,
+      remainingTicketInventory,
+      remainingPossibleTicketRevenue,
       ticketsNeeded: breakEvenTickets,
+      ticketsStillNeeded,
       remainingTicketsAfterBreakEven,
       canBreakEvenWithTicketInventory,
       ticketRevenueShortfall
@@ -211,9 +247,29 @@ export function updateSummaryDisplay(data) {
     averageTicketPriceEl.textContent = (data.ticketBreakEven?.averageTicketPrice || 0).toFixed(2);
   }
 
+  const totalTicketsSoldEl = document.getElementById("totalTicketsSold");
+  if (totalTicketsSoldEl) {
+    totalTicketsSoldEl.textContent = (data.ticketBreakEven?.totalTicketsSold || 0).toLocaleString("en-US");
+  }
+
+  const currentTicketRevenueEl = document.getElementById("currentTicketRevenue");
+  if (currentTicketRevenueEl) {
+    currentTicketRevenueEl.textContent = (data.ticketBreakEven?.currentTicketRevenue || 0).toFixed(2);
+  }
+
+  const remainingAmountEl = document.getElementById("remainingAmountToBreakEven");
+  if (remainingAmountEl) {
+    remainingAmountEl.textContent = (data.ticketBreakEven?.remainingAmountToBreakEven || 0).toFixed(2);
+  }
+
   const totalTicketsAvailableEl = document.getElementById("totalTicketsAvailable");
   if (totalTicketsAvailableEl) {
     totalTicketsAvailableEl.textContent = (data.ticketBreakEven?.totalTicketsAvailable || 0).toLocaleString("en-US");
+  }
+
+  const remainingTicketInventoryEl = document.getElementById("remainingTicketInventory");
+  if (remainingTicketInventoryEl) {
+    remainingTicketInventoryEl.textContent = (data.ticketBreakEven?.remainingTicketInventory || 0).toLocaleString("en-US");
   }
 
   const totalTicketRevenueEl = document.getElementById("totalTicketRevenue");
@@ -221,9 +277,19 @@ export function updateSummaryDisplay(data) {
     totalTicketRevenueEl.textContent = (data.ticketBreakEven?.totalTicketRevenue || 0).toFixed(2);
   }
 
+  const remainingPossibleRevenueEl = document.getElementById("remainingPossibleTicketRevenue");
+  if (remainingPossibleRevenueEl) {
+    remainingPossibleRevenueEl.textContent = (data.ticketBreakEven?.remainingPossibleTicketRevenue || 0).toFixed(2);
+  }
+
   const breakEvenTicketsEl = document.getElementById("breakEvenTickets");
   if (breakEvenTicketsEl) {
     breakEvenTicketsEl.textContent = (data.ticketBreakEven?.ticketsNeeded || 0).toLocaleString("en-US");
+  }
+
+  const ticketsStillNeededEl = document.getElementById("ticketsStillNeeded");
+  if (ticketsStillNeededEl) {
+    ticketsStillNeededEl.textContent = (data.ticketBreakEven?.ticketsStillNeeded || 0).toLocaleString("en-US");
   }
 
   const remainingTicketsEl = document.getElementById("remainingTicketsAfterBreakEven");
@@ -234,10 +300,11 @@ export function updateSummaryDisplay(data) {
   const breakEvenWarningEl = document.getElementById("breakEvenWarning");
   if (breakEvenWarningEl) {
     const ticketBreakEven = data.ticketBreakEven || {};
-    const shouldShowWarning = ticketBreakEven.totalTicketsAvailable > 0 && !ticketBreakEven.canBreakEvenWithTicketInventory;
+    const hasTicketInventory = ticketBreakEven.totalTicketsAvailable > 0 || ticketBreakEven.totalTicketsSold > 0;
+    const shouldShowWarning = hasTicketInventory && ticketBreakEven.remainingAmountToBreakEven > 0 && !ticketBreakEven.canBreakEvenWithTicketInventory;
     breakEvenWarningEl.hidden = !shouldShowWarning;
     breakEvenWarningEl.textContent = shouldShowWarning
-      ? `Break-even is not possible with the current ticket inventory. Maximum possible ticket revenue is $${(ticketBreakEven.totalTicketRevenue || 0).toFixed(2)}, leaving a $${(ticketBreakEven.ticketRevenueShortfall || 0).toFixed(2)} shortfall.`
+      ? `Zero-profit is not possible with the current remaining ticket inventory. Remaining possible ticket revenue is $${(ticketBreakEven.remainingPossibleTicketRevenue || 0).toFixed(2)}, leaving a $${(ticketBreakEven.ticketRevenueShortfall || 0).toFixed(2)} shortfall.`
       : "";
   }
 

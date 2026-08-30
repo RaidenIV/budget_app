@@ -240,6 +240,7 @@ function collectTicketBreakEvenElements() {
   for (let i = 1; i <= count; i++) {
     addById(`ticketTypeName_${i}`);
     addById(`ticketTypePrice_${i}`);
+    addById(`ticketTypeSold_${i}`);
     addById(`ticketTypeAvailable_${i}`);
   }
 

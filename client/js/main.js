@@ -63,7 +63,7 @@ export function updateBudget() {
 function getTicketTypeInputValues() {
   const values = {};
   document
-    .querySelectorAll('[id^="ticketTypeName_"], [id^="ticketTypePrice_"], [id^="ticketTypeAvailable_"]')
+    .querySelectorAll('[id^="ticketTypeName_"], [id^="ticketTypePrice_"], [id^="ticketTypeSold_"], [id^="ticketTypeAvailable_"]')
     .forEach((el) => {
       values[el.id] = el.value;
     });
@@ -119,6 +119,24 @@ export function regenerateTicketTypes() {
 
     priceCol.append(priceLabel, priceInput);
 
+    const soldCol = document.createElement("div");
+    soldCol.className = "ads-split-col";
+
+    const soldLabel = document.createElement("div");
+    soldLabel.className = "ads-split-label";
+    soldLabel.textContent = "Sold";
+
+    const soldInput = document.createElement("input");
+    soldInput.id = `ticketTypeSold_${i}`;
+    soldInput.type = "number";
+    soldInput.min = "0";
+    soldInput.step = "1";
+    soldInput.placeholder = "0";
+    soldInput.value = previousValues[soldInput.id] || "";
+    soldInput.addEventListener("input", updateBudget);
+
+    soldCol.append(soldLabel, soldInput);
+
     const availableCol = document.createElement("div");
     availableCol.className = "ads-split-col";
 
@@ -136,7 +154,7 @@ export function regenerateTicketTypes() {
     availableInput.addEventListener("input", updateBudget);
 
     availableCol.append(availableLabel, availableInput);
-    row.append(nameCol, priceCol, availableCol);
+    row.append(nameCol, priceCol, soldCol, availableCol);
     container.appendChild(row);
   }
 
