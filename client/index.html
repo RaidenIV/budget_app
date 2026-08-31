@@ -520,24 +520,28 @@
 
             <div class="break-even-section">
                 <div class="summary-subtitle">ZERO-PROFIT POINT</div>
-                <div class="quantity-row break-even-quantity-row">
-                    <label for="numTicketTypes">Number of Ticket Types:</label>
-                    <input id="numTicketTypes" type="number" min="0" max="10" value="0" onchange="regenerateTicketTypes()">
-                </div>
+                <input id="numTicketTypes" type="hidden" value="0">
                 <div id="ticketTypeInputs"></div>
+                <button type="button" class="add-ticket-type-btn" onclick="addTicketType()">+ Add Ticket Type</button>
                 <div class="break-even-results">
-                    <p>Weighted Average Ticket Price: $<span id="averageTicketPrice">0.00</span></p>
-                    <p>Total Tickets Sold: <span id="totalTicketsSold">0</span></p>
-                    <p>Current Ticket Revenue: $<span id="currentTicketRevenue">0.00</span></p>
-                    <p>Remaining Amount To Zero-Profit Point: $<span id="remainingAmountToBreakEven">0.00</span></p>
-                    <p>Total Tickets Available: <span id="totalTicketsAvailable">0</span></p>
-                    <p>Remaining Ticket Inventory: <span id="remainingTicketInventory">0</span></p>
-                    <p>Total Possible Ticket Revenue: $<span id="totalTicketRevenue">0.00</span></p>
-                    <p>Remaining Possible Ticket Revenue: $<span id="remainingPossibleTicketRevenue">0.00</span></p>
-                    <p>Tickets Needed: <span id="breakEvenTickets">0</span></p>
-                    <p>Tickets Still Needed: <span id="ticketsStillNeeded">0</span></p>
-                    <p>Remaining Tickets After Zero-Profit Point: <span id="remainingTicketsAfterBreakEven">0</span></p>
+                    <div class="break-even-main-metrics">
+                        <p>Current Ticket Revenue: $<span id="currentTicketRevenue">0.00</span></p>
+                        <p>Amount Needed: $<span id="remainingAmountToBreakEven">0.00</span></p>
+                        <p>Tickets Still Needed: <span id="ticketsStillNeeded">0</span></p>
+                        <p>Status: <span id="zeroProfitStatus">Add ticket info to calculate</span></p>
+                        <p>Best-Case Path: <span id="bestCaseTicketPath">N/A</span></p>
+                    </div>
                     <p id="breakEvenWarning" class="break-even-warning" hidden></p>
+                    <details class="break-even-details">
+                        <summary>Details</summary>
+                        <p>Total Tickets Sold: <span id="totalTicketsSold">0</span></p>
+                        <p>Remaining Inventory: <span id="remainingTicketInventory">0</span></p>
+                        <p>Remaining Possible Revenue: $<span id="remainingPossibleTicketRevenue">0.00</span></p>
+                        <p>Weighted Remaining Ticket Value: $<span id="averageTicketPrice">0.00</span></p>
+                        <p>Projected Profit If Sold Out: $<span id="projectedSoldOutProfit">0.00</span></p>
+                        <p>Total Ticket Capacity: <span id="totalTicketsAvailable">0</span></p>
+                        <p>Total Ticket Capacity Revenue: $<span id="totalTicketRevenue">0.00</span></p>
+                    </details>
                 </div>
             </div>
             

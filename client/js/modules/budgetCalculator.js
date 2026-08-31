@@ -139,12 +139,14 @@ export function calculateBudget() {
   let totalTicketRevenue = 0;
   let remainingTicketInventory = 0;
   let remainingPossibleTicketRevenue = 0;
+  const remainingTicketTypes = [];
 
   for (let i = 1; i <= numTicketTypes; i++) {
     const price = Math.max(0, getNum(`ticketTypePrice_${i}`));
     const sold = Math.max(0, Math.floor(getNum(`ticketTypeSold_${i}`)));
     const available = Math.max(0, Math.floor(getNum(`ticketTypeAvailable_${i}`)));
     const remainingAvailable = Math.max(0, available - sold);
+    const ticketName = document.getElementById(`ticketTypeName_${i}`)?.value?.trim() || `Ticket Type ${i}`;
 
     if (price > 0) {
       if (sold > 0) {
@@ -160,24 +162,24 @@ export function calculateBudget() {
       if (remainingAvailable > 0) {
         remainingTicketInventory += remainingAvailable;
         remainingPossibleTicketRevenue += price * remainingAvailable;
+        remainingTicketTypes.push({ name: ticketName, price, remaining: remainingAvailable });
       }
     }
   }
 
+  const currentRevenueIncludingTickets = totalRevenue + currentTicketRevenue;
   const soldWeightedAverageTicketPrice = totalTicketsSold > 0
     ? currentTicketRevenue / totalTicketsSold
+    : 0;
+  const remainingWeightedTicketValue = remainingTicketInventory > 0
+    ? remainingPossibleTicketRevenue / remainingTicketInventory
     : 0;
   const availableWeightedAverageTicketPrice = totalTicketsAvailable > 0
     ? totalTicketRevenue / totalTicketsAvailable
     : 0;
-  const averageTicketPrice = soldWeightedAverageTicketPrice || availableWeightedAverageTicketPrice;
-  const remainingAmountToBreakEven = Math.max(0, totalExpenses - currentTicketRevenue);
-
-  const breakEvenTickets = averageTicketPrice > 0 && totalExpenses > 0
-    ? Math.ceil(totalExpenses / averageTicketPrice)
-    : 0;
-  const ticketsStillNeeded = averageTicketPrice > 0 && remainingAmountToBreakEven > 0
-    ? Math.ceil(remainingAmountToBreakEven / averageTicketPrice)
+  const remainingAmountToBreakEven = Math.max(0, totalExpenses - currentRevenueIncludingTickets);
+  const ticketsStillNeeded = remainingWeightedTicketValue > 0 && remainingAmountToBreakEven > 0
+    ? Math.ceil(remainingAmountToBreakEven / remainingWeightedTicketValue)
     : 0;
 
   const canBreakEvenWithTicketInventory = remainingAmountToBreakEven <= remainingPossibleTicketRevenue;
@@ -189,6 +191,45 @@ export function calculateBudget() {
   const ticketRevenueShortfall = canBreakEvenWithTicketInventory
     ? 0
     : Math.max(0, remainingAmountToBreakEven - remainingPossibleTicketRevenue);
+  const projectedSoldOutProfit = currentRevenueIncludingTickets + remainingPossibleTicketRevenue - totalExpenses;
+  const hasTicketData = totalTicketsSold > 0 || totalTicketsAvailable > 0 || currentTicketRevenue > 0 || remainingPossibleTicketRevenue > 0;
+
+  function buildBestCaseTicketPath(amountNeeded, ticketTypes) {
+    if (!hasTicketData) return "N/A";
+    if (amountNeeded <= 0) return "Already at zero-profit point";
+
+    let remainingAmount = amountNeeded;
+    const pathParts = [];
+
+    [...ticketTypes]
+      .sort((a, b) => b.price - a.price)
+      .forEach((ticketType) => {
+        if (remainingAmount <= 0 || ticketType.price <= 0 || ticketType.remaining <= 0) return;
+
+        const quantity = Math.min(ticketType.remaining, Math.ceil(remainingAmount / ticketType.price));
+        if (quantity <= 0) return;
+
+        pathParts.push(`${quantity.toLocaleString("en-US")} ${ticketType.name}`);
+        remainingAmount -= quantity * ticketType.price;
+      });
+
+    if (remainingAmount > 0) return "Not enough remaining inventory";
+    return pathParts.join(" + ") || "N/A";
+  }
+
+  const bestCaseTicketPath = buildBestCaseTicketPath(remainingAmountToBreakEven, remainingTicketTypes);
+  const zeroProfitStatus = !hasTicketData
+    ? "Add ticket info to calculate"
+    : remainingAmountToBreakEven === 0
+      ? "Zero-profit point reached"
+      : canBreakEvenWithTicketInventory
+        ? "Zero-profit is still possible"
+        : "Zero-profit is not possible with remaining inventory";
+  const zeroProfitStatusTone = !hasTicketData
+    ? "neutral"
+    : remainingAmountToBreakEven === 0 || canBreakEvenWithTicketInventory
+      ? "positive"
+      : "warning";
 
   return {
     expenses: {
@@ -215,21 +256,28 @@ export function calculateBudget() {
       total: totalRevenue
     },
     ticketBreakEven: {
-      averageTicketPrice,
+      averageTicketPrice: remainingWeightedTicketValue,
       soldWeightedAverageTicketPrice,
       availableWeightedAverageTicketPrice,
+      remainingWeightedTicketValue,
       totalTicketsSold,
       currentTicketRevenue,
+      currentRevenueIncludingTickets,
       remainingAmountToBreakEven,
       totalTicketsAvailable,
       totalTicketRevenue,
       remainingTicketInventory,
       remainingPossibleTicketRevenue,
-      ticketsNeeded: breakEvenTickets,
+      ticketsNeeded: ticketsStillNeeded,
       ticketsStillNeeded,
       remainingTicketsAfterBreakEven,
       canBreakEvenWithTicketInventory,
-      ticketRevenueShortfall
+      ticketRevenueShortfall,
+      projectedSoldOutProfit,
+      bestCaseTicketPath,
+      zeroProfitStatus,
+      zeroProfitStatusTone,
+      hasTicketData
     },
     netProfit
   };
@@ -289,7 +337,36 @@ export function updateSummaryDisplay(data) {
 
   const ticketsStillNeededEl = document.getElementById("ticketsStillNeeded");
   if (ticketsStillNeededEl) {
-    ticketsStillNeededEl.textContent = (data.ticketBreakEven?.ticketsStillNeeded || 0).toLocaleString("en-US");
+    const ticketBreakEven = data.ticketBreakEven || {};
+    const ticketsNeeded = ticketBreakEven.ticketsStillNeeded || 0;
+    ticketsStillNeededEl.textContent = ticketBreakEven.remainingAmountToBreakEven === 0
+      ? "0"
+      : ticketsNeeded > 0
+        ? `~${ticketsNeeded.toLocaleString("en-US")}`
+        : "N/A";
+  }
+
+  const zeroProfitStatusEl = document.getElementById("zeroProfitStatus");
+  if (zeroProfitStatusEl) {
+    const ticketBreakEven = data.ticketBreakEven || {};
+    zeroProfitStatusEl.textContent = ticketBreakEven.zeroProfitStatus || "Add ticket info to calculate";
+    zeroProfitStatusEl.className = `break-even-status-${ticketBreakEven.zeroProfitStatusTone || "neutral"}`;
+  }
+
+  const bestCaseTicketPathEl = document.getElementById("bestCaseTicketPath");
+  if (bestCaseTicketPathEl) {
+    bestCaseTicketPathEl.textContent = data.ticketBreakEven?.bestCaseTicketPath || "N/A";
+  }
+
+  const projectedSoldOutProfitEl = document.getElementById("projectedSoldOutProfit");
+  if (projectedSoldOutProfitEl) {
+    const projectedProfit = data.ticketBreakEven?.projectedSoldOutProfit || 0;
+    projectedSoldOutProfitEl.textContent = `${projectedProfit >= 0 ? "+" : "-"}$${Math.abs(projectedProfit).toFixed(2)}`;
+    projectedSoldOutProfitEl.style.color = projectedProfit > 0
+      ? "var(--success)"
+      : projectedProfit < 0
+        ? "red"
+        : "";
   }
 
   const remainingTicketsEl = document.getElementById("remainingTicketsAfterBreakEven");

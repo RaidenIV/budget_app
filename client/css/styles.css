@@ -406,20 +406,45 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     text-align: left;
 }
 
-.break-even-section .quantity-row {
-    margin-bottom: 12px;
-}
-
-.break-even-section .quantity-row label {
-    margin: 0;
-}
-
 .break-even-section .ads-split-row {
     text-align: left;
 }
 
 .break-even-section .break-even-ticket-row {
-    grid-template-columns: 1.1fr 0.75fr 0.75fr 0.75fr;
+    grid-template-columns: 1.1fr 0.75fr 0.75fr 0.75fr auto;
+    align-items: end;
+}
+
+.add-ticket-type-btn {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+.remove-ticket-type-btn {
+    min-width: 42px;
+    height: 38px;
+    padding: 0 10px;
+    align-self: end;
+}
+
+.break-even-main-metrics {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.break-even-status-positive {
+    color: var(--success) !important;
+}
+
+.break-even-status-warning {
+    color: #ff4d4d !important;
+}
+
+.break-even-status-neutral {
+    color: var(--accent) !important;
 }
 
 .break-even-warning {
@@ -429,9 +454,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-top: 10px !important;
 }
 
+.break-even-details {
+    border-top: 1px solid var(--line);
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+.break-even-details summary {
+    cursor: pointer;
+    font-weight: 800;
+    color: var(--accent);
+    text-align: center;
+}
+
 @media (max-width: 900px) {
     .break-even-section .break-even-ticket-row {
         grid-template-columns: 1fr;
+    }
+
+    .remove-ticket-type-btn {
+        width: 100%;
     }
 }
 

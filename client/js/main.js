@@ -70,16 +70,19 @@ function getTicketTypeInputValues() {
   return values;
 }
 
-export function regenerateTicketTypes() {
+function setTicketTypeCount(count) {
   const countInput = document.getElementById("numTicketTypes");
+  if (!countInput) return 0;
+
+  const safeCount = Math.max(0, Math.min(10, Math.floor(Number(count) || 0)));
+  countInput.value = String(safeCount);
+  return safeCount;
+}
+
+function renderTicketTypeRows(count, previousValues = getTicketTypeInputValues()) {
   const container = document.getElementById("ticketTypeInputs");
-  if (!countInput || !container) return;
+  if (!container) return;
 
-  let count = Math.floor(Number(countInput.value) || 0);
-  count = Math.max(0, Math.min(10, count));
-  countInput.value = String(count);
-
-  const previousValues = getTicketTypeInputValues();
   container.innerHTML = "";
 
   for (let i = 1; i <= count; i++) {
@@ -112,6 +115,7 @@ export function regenerateTicketTypes() {
     const priceInput = document.createElement("input");
     priceInput.id = `ticketTypePrice_${i}`;
     priceInput.type = "number";
+    priceInput.min = "0";
     priceInput.step = "0.01";
     priceInput.placeholder = "0.00";
     priceInput.value = previousValues[priceInput.id] || "";
@@ -142,7 +146,7 @@ export function regenerateTicketTypes() {
 
     const availableLabel = document.createElement("div");
     availableLabel.className = "ads-split-label";
-    availableLabel.textContent = "Available";
+    availableLabel.textContent = "Capacity";
 
     const availableInput = document.createElement("input");
     availableInput.id = `ticketTypeAvailable_${i}`;
@@ -154,10 +158,58 @@ export function regenerateTicketTypes() {
     availableInput.addEventListener("input", updateBudget);
 
     availableCol.append(availableLabel, availableInput);
-    row.append(nameCol, priceCol, soldCol, availableCol);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "remove-ticket-type-btn";
+    removeButton.textContent = "×";
+    removeButton.setAttribute("aria-label", `Remove ticket type ${i}`);
+    removeButton.addEventListener("click", () => removeTicketType(i));
+
+    row.append(nameCol, priceCol, soldCol, availableCol, removeButton);
     container.appendChild(row);
   }
+}
 
+export function regenerateTicketTypes() {
+  const countInput = document.getElementById("numTicketTypes");
+  if (!countInput) return;
+
+  const count = setTicketTypeCount(countInput.value);
+  renderTicketTypeRows(count);
+  updateBudget();
+}
+
+export function addTicketType() {
+  const countInput = document.getElementById("numTicketTypes");
+  if (!countInput) return;
+
+  const nextCount = setTicketTypeCount((Number(countInput.value) || 0) + 1);
+  renderTicketTypeRows(nextCount);
+  updateBudget();
+}
+
+export function removeTicketType(indexToRemove) {
+  const countInput = document.getElementById("numTicketTypes");
+  if (!countInput) return;
+
+  const currentCount = Math.max(0, Math.min(10, Math.floor(Number(countInput.value) || 0)));
+  const previousValues = getTicketTypeInputValues();
+  const shiftedValues = {};
+  let nextIndex = 1;
+
+  for (let i = 1; i <= currentCount; i++) {
+    if (i === indexToRemove) continue;
+
+    shiftedValues[`ticketTypeName_${nextIndex}`] = previousValues[`ticketTypeName_${i}`] || "";
+    shiftedValues[`ticketTypePrice_${nextIndex}`] = previousValues[`ticketTypePrice_${i}`] || "";
+    shiftedValues[`ticketTypeSold_${nextIndex}`] = previousValues[`ticketTypeSold_${i}`] || "";
+    shiftedValues[`ticketTypeAvailable_${nextIndex}`] = previousValues[`ticketTypeAvailable_${i}`] || "";
+    nextIndex++;
+  }
+
+  const nextCount = setTicketTypeCount(currentCount - 1);
+  renderTicketTypeRows(nextCount, shiftedValues);
   updateBudget();
 }
 
@@ -267,6 +319,8 @@ window.triggerImport = triggerImport;
 window.downloadAll = downloadAll;
 window.toggleCollapse = toggleCollapse;
 window.regenerateTicketTypes = regenerateTicketTypes;
+window.addTicketType = addTicketType;
+window.removeTicketType = removeTicketType;
 window.copyTextPreview = copyTextPreview;
 window.exportTextPreviewTxt = exportTextPreviewTxt;
 window.downloadChartsPNG = () => downloadChartsPNG(buildChartsPngFileName());
