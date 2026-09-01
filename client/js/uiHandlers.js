@@ -39,6 +39,7 @@ function buildRegenerators() {
     localDJs: () => window.regenerateLocalDJs?.(),
     cdjs: () => window.regenerateCDJs?.(),
     showRunners: () => window.regenerateShowRunners?.(),
+    media: () => window.regenerateMedia?.(),
 
     // Some codepaths call these differently; keep both
     vendors: () => window.regenerateVendors?.(),
